@@ -1,0 +1,21 @@
+#ignore python compiled files
+*.pyc
+
+#ignore PyCharm project data
+.idea
+venv/
+
+#ignore backup folder
+otls/backup
+
+#ignore other files
+hip/backup/
+hip/export/
+hip/render/
+notes.md
+
+#ignore other unimportant expanded HDA files
+.OPfallbacks
+.OPdummydefs
+.createtimes
+.modtimes

@@ -1,0 +1,8 @@
+{
+  "path": "$HOUDINI_PACKAGE_PATH/..",
+  "env": [
+      {
+        "HTG_BASEDIR": "$HOUDINI_PACKAGE_PATH/.."
+      }
+    ]
+}
