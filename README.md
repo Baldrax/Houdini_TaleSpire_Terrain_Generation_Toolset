@@ -14,7 +14,7 @@ The main node for managing a terrain project, this node contains subnetworks tha
 It is also the main interface for setting up the terrain and exporting the final results.
 #### TaleSpire_Object
 This node is used to import a TaleSpire Tile, Prop or Slab for use in the system. It has controls over the placement of these
-objects in regards to how they interact with other nodes like TaleSpire_Tiler and TaleSpire_Scatter.
+objects in regard to how they interact with other nodes like TaleSpire_Tiler and TaleSpire_Scatter.
 #### TaleSpire_Biome
 This node defines a Biome which controls what TaleSpire Tiles and Props get put on to the terrain. It has subnetworks within for 
 defining sets of objects, rules for placing Tiles and rules for placing/scattering Props.
