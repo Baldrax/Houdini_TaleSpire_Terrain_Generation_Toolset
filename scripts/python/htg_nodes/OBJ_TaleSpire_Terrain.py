@@ -80,7 +80,7 @@ def cache_uuids(node):
 
 def copy_slab(node=None):
     json_data = get_js(node)
-    slab = ts_encode(json_data)
+    slab = ts_encode.encode(json_data)
     htg_utils.copy_to_clipboard(slab.strip("b'`"))
 
 
@@ -111,7 +111,7 @@ def get_slab_with_pos(node=None):
     point = geo.point(0)
     pos = tuple(point.position())
     json_data = get_js(node)
-    slab = ts_encode(json_data)
+    slab = ts_encode.encode(json_data)
     out = {
         "position": {"x": pos[0], "y": pos[1], "z": -pos[2]},
         "code": slab.strip("b'`")
