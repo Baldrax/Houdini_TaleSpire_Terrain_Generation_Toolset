@@ -5,13 +5,10 @@
 .idea
 venv/
 
-#ignore backup folder
-otls/backup
+#ignore backup folders
+**/backup/
 
 #ignore other files
-hip/backup/
-hip/export/
-hip/render/
 notes.md
 
 #ignore other unimportant expanded HDA files
