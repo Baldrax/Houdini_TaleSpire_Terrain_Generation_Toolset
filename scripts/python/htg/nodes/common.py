@@ -31,3 +31,7 @@ class SharedData:
     def get_database_node(self):
         database_node = hou.node('{}/data/TS_Database'.format(self.shared_data_node.path()))
         return database_node
+
+    def cook_database_node(self):
+        database_node = self.get_database_node()
+        database_node.cook(force=True)

@@ -1,15 +1,39 @@
 import hou
 import json
+import os
 import htg.utils
 import talespire.encode as ts_encode
+import htg.configs as ts_configs
+import htg.nodes.common as ts_common
 
 
-def houtest():
-    hou.ui.displayMessage('foobar')
+def read_configs(node=None):
+    cfg = ts_configs.Configs()
+    parm_list = node.parms()
+    for cfg_name in cfg.default_config_keys:
+        parm = node.parm('cfg_{}'.format(cfg_name))
+        if parm in parm_list:
+            parm.set(cfg.get_config(cfg_name))
+
+
+def write_config(parm=None):
+    parm_name = parm.name()
+    cfg_name = parm_name.split('cfg_')[-1]
+
+    cfg = ts_configs.Configs()
+    cfg.set_config(cfg_name, parm.eval())
+
+    if cfg_name == 'talespire_directory':
+        if os.path.isdir(parm.eval()):
+            ts_data = ts_common.SharedData()
+            ts_data.cook_database_node()
+        else:
+            hou.ui.displayMessage('The Directory is not Valid. You must select a valid TaleSpire install directory.')
 
 
 def cook_the_things(node=None):
-    set_terrain_path(node)
+    ts_data = ts_common.SharedData()
+    ts_data.cook_database_node()
     set_lod_size(node)
     for snode in node.allSubChildren():
         if snode.type().nameComponents()[2] == 'python':

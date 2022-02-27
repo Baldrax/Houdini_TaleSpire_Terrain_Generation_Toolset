@@ -9,6 +9,7 @@ venv/
 **/backup/
 
 #ignore other files
+.userconfigs
 notes.md
 
 #ignore other unimportant expanded HDA files
