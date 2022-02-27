@@ -1,6 +1,6 @@
 import hou
 import json
-import htg_utils
+import htg.utils
 import talespire.encode as ts_encode
 
 
@@ -22,12 +22,12 @@ def cook_the_things(node=None):
 
 def edit_terrain(node=None):
     dest_node = hou.node(node.path() + '/terrain_edit')
-    htg_utils.set_network(node, dest_node)
+    htg.utils.set_network(node, dest_node)
 
 
 def edit_biomes(node=None):
     dest_node = hou.node(node.path() + '/biomes')
-    htg_utils.set_network(node, dest_node)
+    htg.utils.set_network(node, dest_node)
 
 
 def set_lod_size(node=None):
@@ -81,7 +81,7 @@ def cache_uuids(node):
 def copy_slab(node=None):
     json_data = get_js(node)
     slab = ts_encode.encode(json_data)
-    htg_utils.copy_to_clipboard(slab.strip("b'`"))
+    htg.utils.copy_to_clipboard(slab.strip("b'`"))
 
 
 def copy_slab_and_advance(node=None):
@@ -101,7 +101,7 @@ def encode_slabs(node=None):
         slab_index_parm.set(i)
         slab_pos = get_slab_with_pos(node)
         slab_json.append(slab_pos)
-    htg_utils.copy_to_clipboard(json.dumps(slab_json))
+    htg.utils.copy_to_clipboard(json.dumps(slab_json))
     slab_index_parm.set(og_index)
 
 
