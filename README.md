@@ -47,3 +47,7 @@ but replace the path with where you installed the toolset, make sure it points t
 Join us on Discord to discuss the toolset, share work and inspiration and to get the latest news.
 
 https://discord.gg/fUp8eK2mgK
+
+### Attributions
+The TaleSpire Slab Encoding/Decoding code was originally authored by LuPro 
+at [LuPro/SlabelFish](https://github.com/LuPro/SlabelFish)
