@@ -1,13 +1,45 @@
+import struct
+import base64
 import hou
 import json
 import talespire.decode as ts_decode
 
 
+def lock_collider(parm=None, cook=False):
+    node = parm.node()
+    stash_node = hou.node(node.path()+'/TS_Object/stash/stash_collider')
+
+    if parm.eval() == 1:
+        try:
+            if cook:
+                stash_node.cook(force=True)
+            stash_node.parm('stashinput').pressButton()
+        except AttributeError:
+            pass
+
+
+def check_locks(node=None):
+    """This is meant to lock all the footings when Houdini loads, but it isn't working, disabled for now."""
+    parm = node.parm('footing_lock')
+    if parm.eval() == 0:
+        # parm.set(1)
+        # lock_collider(parm, cook=True)
+        pass
+
+
 def decode_slab(node=None):
     data = node.parm('ts_slab_str').eval()
     node.parm('ts_slab_str').set(data.strip('`'))
-    asset_data_list = ts_decode.decode(data)
+    try:
+        asset_data_list = ts_decode.decode(data)
+    except (struct.error, base64.binascii.Error):
+        hou.ui.displayMessage('Not a valid TaleSpire Slab')
+        asset_data_list = None
 
-    node.setUserData('ts_slab', json.dumps(asset_data_list))
+    if asset_data_list:
+        node.setUserData('ts_slab', json.dumps(asset_data_list))
+    else:
+        node.clearUserDataDict()
+
     slab_points_node = hou.node(node.path() + '/TS_Object/slab_points')
     slab_points_node.cook(force=True)
