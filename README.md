@@ -12,6 +12,10 @@ new to Houdini learning that aspect of the software is a good start.
 Houdini is a node-based procedural system so the Toolset consist of a set of Houdini Nodes called
 HDA's (Houdini Digital Assets)
 
+### Overview Video
+I slapped together a really quick feature overview video:
+- [TaleSpire Terrain Generation Overview v0.7.1-alpha](https://www.youtube.com/watch?v=193IomvemaA)
+
 ### Current Nodes
 #### TaleSpire_Terrain
 The main node for managing a terrain project, this node contains subnetworks that allow a workspace to 
@@ -41,7 +45,11 @@ but replace the path with where you installed the toolset, make sure it points t
     "package_path": "D:\Users\<username>\Documents\TaleSpire\Houdini_Terrain_Generation_Toolset\packages"
 }
 ```
-
+- Launch Houdini and you should be able to create a `TaleSpire_Terrain` node in the `/obj` network editor.
+If you can't, something went wrong, check all the steps.
+- After placing the `TaleSpire_Terrain` node, go to the settings tab on that node and set the `talespire_directory`
+parameter to be the location of your TaleSpire install. This setting should persist for new scenes and nodes.
+- Create amazing Terrains and share your work!
 
 ## Contact
 Join us on Discord to discuss the toolset, share work and inspiration and to get the latest news.
