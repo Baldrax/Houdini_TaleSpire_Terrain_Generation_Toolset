@@ -51,6 +51,27 @@ If you can't, something went wrong, check all the steps.
 parameter to be the location of your TaleSpire install. This setting should persist for new scenes and nodes.
 - Create amazing Terrains and share your work!
 
+
+### Better with Mods!
+This tool supports use of a mod that allows multiple slab pastes at once. That's right, instead of laboriously hand 
+placing hundreds of slabs you could do it all with a single click and paste.
+
+The main plugin this utilizes is 
+[Extra Assets Registration Plugin](https://talespire.thunderstore.io/package/LordAshes/ExtraAssetsRegistrationPlugin/), 
+EAR for short, special thanks to LordAshes for adding the multi slab paste feature at my request.
+Install it with the Mod Manager for the best user experience. In order for EAR to work you will also have to choose
+one of the following.
+- [RPCPlugin](https://talespire.thunderstore.io/package/HolloFox_TS/RPCPlugin/)
+- [Chat Service](https://talespire.thunderstore.io/package/LordAshes/ChatService/)
+
+If you are only using the mod to paste maps it is probably easier to use RPCPlugin since I believe Chat Service may
+require all connected users to have the mods. If you are using modded assets, like minis and such, it is better to use 
+Chat Service.
+
+To use the mod with this toolset simply click the `Multi Copy Slabs` button on the Export page of the TaleSpire Terrain 
+node and use `LCTRL+S` in TaleSpire with the mods enabled.
+
+
 ## Contact
 Join us on Discord to discuss the toolset, share work and inspiration and to get the latest news.
 
