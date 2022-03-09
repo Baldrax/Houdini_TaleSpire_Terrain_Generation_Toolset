@@ -8,6 +8,9 @@ venv/
 #ignore backup folders
 **/backup/
 
+#ignore example ts_terrain
+hip/examples/ts_terrain/
+
 #ignore other files
 .userconfigs
 notes.md
