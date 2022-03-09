@@ -51,6 +51,18 @@ If you can't, something went wrong, check all the steps.
 parameter to be the location of your TaleSpire install. This setting should persist for new scenes and nodes.
 - Create amazing Terrains and share your work!
 
+### Examples
+#### Terrain
+There is an example Houdini scene file included with this distribution `hip/examples/example_Forest_Gully.hipnc`.
+It is best to copy this scene to an alternate location before running it as it needs to save local data. Alternately you 
+can launch it and "Save As" to a working directory.
+
+I recommend running through all the comments before attempting to resize the map from its 60x60 default since there are a 
+few areas that may not work properly which are noted within the file.
+
+#### Biomes
+There is a scene file containing example the example biomes being used for development, more biomes will be available in
+the future. `hip/examples/biomes.hipnc`
 
 ### Better with Mods!
 This tool supports use of a mod that allows multiple slab pastes at once. That's right, instead of laboriously hand 
