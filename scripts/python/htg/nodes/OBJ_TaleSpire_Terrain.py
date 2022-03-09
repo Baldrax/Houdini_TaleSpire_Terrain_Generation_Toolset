@@ -31,6 +31,53 @@ def write_config(parm=None):
             hou.ui.displayMessage('The Directory is not Valid. You must select a valid TaleSpire install directory.')
 
 
+def set_attributions(node=None):
+    pts_node = hou.node(node.path()+'/terrain_props/DISPLAY')
+
+    authors = set([])
+    data = {}
+
+    for pt in pts_node.geometry().points():
+        obj_type = pt.attribValue('obj_type')
+        if obj_type == 'slab':
+            author_name = pt.attribValue('author_name').strip()
+            author_url = pt.attribValue('author_url').strip()
+            if author_name and author_name != '':
+                authors.add(author_name)
+                if author_name not in data:
+                    data[author_name] = set([])
+                data[author_name].add(author_url)
+
+    author_list = list(authors)
+    author_list.sort()
+
+    m = ''
+    if len(author_list) > 0:
+        m += 'This map contains assets created by other community members.\n'
+        for name in author_list:
+            m += '\n{}\n'.format(name)
+            for url in data[name]:
+                m += '- {}\n'.format(url)
+    else:
+        dm = 'No Attributions Found.\n'
+        dm += 'If you are using slab assets from other creators, please add the attributions to the ' \
+             'TaleSpire_Object nodes for those assets.'
+        hou.ui.displayMessage(dm)
+
+    if m is not '':
+        m += '\n'
+    m += 'This map was generated with the aid of Baldrax\'s Houdini TaleSpire Terrain Generation Toolset\n'
+    m += 'https://github.com/Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset\n'
+
+    atr_parm = node.parm('attribution_string')
+    atr_parm.set(m)
+
+
+def clip_attributions(node=None):
+    text = node.parm('attribution_string').eval()
+    htg.utils.copy_to_clipboard(text)
+
+
 def cook_the_things(node=None):
     ts_data = ts_common.SharedData()
     ts_data.cook_database_node()
