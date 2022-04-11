@@ -23,3 +23,11 @@ def edit_tiles(node=None):
 def edit_props(node=None):
     dest_node = hou.node(node.path() + '/biome_props')
     htg.utils.set_network(node, dest_node)
+
+
+def default_biome_selected(node=None):
+    active = node.parm('default_biome').eval()
+    if active == 1:
+        for sib_node in node.parent().children():
+            if sib_node.type().nameComponents()[2] == 'TaleSpire_Biome' and sib_node != node:
+                sib_node.parm('default_biome').set(0)
