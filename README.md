@@ -1,6 +1,8 @@
 # Houdini_TaleSpire_Terrain_Generation_Toolset
 A toolset to procedurally create terrain for TaleSpire in Houdini.
 
+![TerrainGenerationExamples](https://user-images.githubusercontent.com/100365731/200086786-b029760e-56f0-46f3-9caf-729247d36fbe.png)
+
 ## About the Toolset
 This is a set of tools to aid in the creation of [TaleSpire](https://talespire.com/) Terrain 
 in [SideFX Software's Houdini](https://www.sidefx.com/products/houdini/).
@@ -13,8 +15,9 @@ Houdini is a node-based procedural system so the Toolset consist of a set of Hou
 HDA's (Houdini Digital Assets)
 
 ### Overview Video
-I slapped together a really quick feature overview video:
-- [TaleSpire Terrain Generation Overview v0.7.1-alpha](https://www.youtube.com/watch?v=193IomvemaA)
+Feature overview video:
+
+[<img src="https://user-images.githubusercontent.com/100365731/200082578-f8a54857-8b44-46fa-9ebf-432656713204.png">](https://www.youtube.com/watch?v=193IomvemaA)
 
 ### Current Nodes
 #### TaleSpire_Terrain
@@ -42,9 +45,10 @@ but replace the path with where you installed the toolset, make sure it points t
 `..\Documents\Houdini19.0\packages\HTTGT.json`
 ```
 {
-    "package_path": "D:\Users\<username>\Documents\TaleSpire\Houdini_Terrain_Generation_Toolset\packages"
+    "package_path": "D:/Users/<username>/Documents/TaleSpire/Houdini_Terrain_Generation_Toolset/packages"
 }
 ```
+:warning: **If you copy and paste the path swap the backslashes "\\" with forward slashes "/"**
 - Launch Houdini and you should be able to create a `TaleSpire_Terrain` node in the `/obj` network editor.
 If you can't, something went wrong, check all the steps.
 - After placing the `TaleSpire_Terrain` node, go to the settings tab on that node and set the `talespire_directory`
@@ -68,17 +72,20 @@ the future. `hip/examples/biomes.hipnc`
 This tool supports use of a mod that allows multiple slab pastes at once. That's right, instead of laboriously hand 
 placing hundreds of slabs you could do it all with a single click and paste.
 
-The main plugin this utilizes is 
+:warning: **The mod integration is currently broken**: There is currently an issue with the mod, CALP, that is needed 
+for multi-paste to work in TaleSpire, as soon as it is up and running again I'll update the documentation.
+
+~~The main plugin this utilizes is 
 [Extra Assets Registration Plugin](https://talespire.thunderstore.io/package/LordAshes/ExtraAssetsRegistrationPlugin/), 
 EAR for short, special thanks to LordAshes for adding the multi slab paste feature at my request.
 Install it with the Mod Manager for the best user experience. In order for EAR to work you will also have to choose
-one of the following.
-- [RPCPlugin](https://talespire.thunderstore.io/package/HolloFox_TS/RPCPlugin/)
-- [Chat Service](https://talespire.thunderstore.io/package/LordAshes/ChatService/)
+one of the following.~~
+- ~~[RPCPlugin](https://talespire.thunderstore.io/package/HolloFox_TS/RPCPlugin/)~~
+- ~~[Chat Service](https://talespire.thunderstore.io/package/LordAshes/ChatService/)~~
 
-If you are only using the mod to paste maps it is probably easier to use RPCPlugin since I believe Chat Service may
+~~If you are only using the mod to paste maps it is probably easier to use RPCPlugin since I believe Chat Service may
 require all connected users to have the mods. If you are using modded assets, like minis and such, it is better to use 
-Chat Service.
+Chat Service.~~
 
 To use the mod with this toolset simply click the `Multi Copy Slabs` button on the Export page of the TaleSpire Terrain 
 node and use `LCTRL+S` in TaleSpire with the mods enabled.
