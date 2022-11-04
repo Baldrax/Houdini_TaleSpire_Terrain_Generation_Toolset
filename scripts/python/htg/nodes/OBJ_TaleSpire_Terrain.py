@@ -16,6 +16,16 @@ def read_configs(node=None):
             parm.set(cfg.get_config(cfg_name))
 
 
+def set_slab_range(node=None):
+    si1_parm = node.parm('slabindex1')
+    si2_parm = node.parm('slabindex2')
+    slabs_node = hou.node(node.path()+'/Export_Slab/NUM_SLABS')
+    num_points = len(slabs_node.geometry().points())
+    si1_parm.set(1)
+    si2_parm.deleteAllKeyframes()
+    si2_parm.set(num_points)
+
+
 def write_config(parm=None):
     parm_name = parm.name()
     cfg_name = parm_name.split('cfg_')[-1]
@@ -171,7 +181,8 @@ def encode_slabs(node=None):
     for i in range(1, num_slabs + 1):
         slab_index_parm.set(i)
         slab_pos = get_slab_with_pos(node)
-        slab_json.append(slab_pos)
+        if slab_pos is not None:
+            slab_json.append(slab_pos)
     htg.utils.copy_to_clipboard(json.dumps(slab_json))
     slab_index_parm.set(og_index)
 
@@ -180,13 +191,17 @@ def get_slab_with_pos(node=None):
     offset_node = hou.node(node.path() + '/Export_Slab/First_Tile')
     geo = offset_node.geometry()
     point = geo.point(0)
-    pos = tuple(point.position())
-    json_data = get_js(node)
-    slab = ts_encode.encode(json_data)
-    out = {
-        "position": {"x": pos[0], "y": pos[1], "z": -pos[2]},
-        "code": slab.strip("b'`")
-    }
+    try:
+        pos = tuple(point.position())
+        json_data = get_js(node)
+        slab = ts_encode.encode(json_data)
+        out = {
+            "position": {"x": pos[0], "y": pos[1], "z": -pos[2]},
+            "code": slab.strip("b'`")
+        }
+    except AttributeError:
+        out = None
+
     return out
 
 
