@@ -6,13 +6,21 @@ import os
 
 
 def get_assets(ts_directory):
-    # TODO: In the future there will likely be other directories to import
-    ts_indexfile = os.path.join(ts_directory, 'Taleweaver', 'd71427a1-5535-4fa7-82d7-4ca1e75edbfd', 'index.json')
+    ts_index_files = list()
+    taleweaver_dir = os.path.join(ts_directory, 'Taleweaver')
 
-    file = open(ts_indexfile, 'r')
-    data = file.read()
-    file.close()
+    # Get a list of all the Taleweaver asset databases
+    for root, dirs, files in os.walk(taleweaver_dir):
+        if 'index.json' in files:
+            ts_index_files.append(os.path.join(root, 'index.json'))
 
-    index_dict = json.loads(data)
+    index_dict_list = list()
 
-    return index_dict
+    for ts_index_file in ts_index_files:
+        file = open(ts_index_file, 'r')
+        data = file.read()
+        file.close()
+
+        index_dict_list.append(json.loads(data))
+
+    return index_dict_list

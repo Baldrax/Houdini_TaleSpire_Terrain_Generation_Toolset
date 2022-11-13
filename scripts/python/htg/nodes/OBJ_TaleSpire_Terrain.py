@@ -139,10 +139,16 @@ def set_terrain_path(node=None):
 
 
 def write_terrain_tiles(node=None):
-    write_node = hou.node(node.path() + '/terrain_tiler/write_terrain_tiles')
-    read_node = hou.node(node.path() + '/terrain_tiler/read_terrain_tiles')
-    write_node.parm('execute').pressButton()
-    read_node.parm('reload').pressButton()
+    # Check to see if the scene has been saved first
+    filename = hou.hipFile.path()
+    if not os.path.isfile(filename):
+        hou.ui.displayMessage('Error: You must save the scene before caching the terrain tiles',
+                              severity=hou.severityType.Error)
+    else:
+        write_node = hou.node(node.path() + '/terrain_tiler/write_terrain_tiles')
+        read_node = hou.node(node.path() + '/terrain_tiler/read_terrain_tiles')
+        write_node.parm('execute').pressButton()
+        read_node.parm('reload').pressButton()
 
 
 def cache_uuids(node):
