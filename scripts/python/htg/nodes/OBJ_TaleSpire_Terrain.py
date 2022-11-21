@@ -74,7 +74,7 @@ def set_attributions(node=None):
              'TaleSpire_Object nodes for those assets.'
         hou.ui.displayMessage(dm)
 
-    if m is not '':
+    if m != '':
         m += '\n'
     m += 'This map was generated with the aid of Baldrax\'s Houdini TaleSpire Terrain Generation Toolset\n'
     m += 'https://github.com/Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset\n'
