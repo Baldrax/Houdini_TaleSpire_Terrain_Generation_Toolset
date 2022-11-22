@@ -149,6 +149,11 @@ def write_terrain_tiles(node=None):
         read_node = hou.node(node.path() + '/terrain_tiler/read_terrain_tiles')
         write_node.parm('execute').pressButton()
         read_node.parm('reload').pressButton()
+        biome_data_node = hou.node(node.path() + '/DATA/Biome_info')
+        try:
+            biome_data_node.cook(force=True)
+        except hou.OperationFailed:
+            pass
 
 
 def cache_uuids(node):
