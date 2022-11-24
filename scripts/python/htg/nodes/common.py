@@ -17,6 +17,34 @@ def get_ts_database_node():
     return shared_data_node.get_database_node()
 
 
+class SharedData:
+
+    def __init__(self):
+        """This class accesses and creates the TaleSpire_Shared_Data node containing the TS database
+        needed from various nodes. This keeps the data in one place where it is cached for efficiency."""
+        self.node_name = '_TaleSpire_Shared_Data_'
+        self.shared_data_node = hou.node('/obj/{}'.format(self.node_name))
+        if not self.shared_data_node:
+            self.shared_data_node = hou.node('/obj').createNode('TaleSpire_Shared_Data', node_name=self.node_name)
+            self.hide()
+
+    def hide(self, state=True):
+        self.shared_data_node.hide(state)
+
+    def get_database_node(self):
+        database_node = hou.node('{}/data/TS_Database'.format(self.shared_data_node.path()))
+        return database_node
+
+    def get_data_node(self):
+        data_node = hou.node('{}/data'.format(self.shared_data_node.path()))
+        return data_node
+
+    def cook_database_node(self):
+        database_node = self.get_database_node()
+        database_node.cook(force=True)
+
+
+# Network IO
 def network_loading():
     """
     Gets the state from the Shared Data node if the contents of user editable networks should be loaded when a new
@@ -96,33 +124,6 @@ def save_network(net_node=None, filename=None, mode='node', warn=True):
         # net_io = NetworkIO(net_node, file_path)
         # net_io.add_all()
         # net_io.write_network()
-
-
-class SharedData:
-
-    def __init__(self):
-        """This class accesses and creates the TaleSpire_Shared_Data node containing the TS database
-        needed from various nodes. This keeps the data in one place where it is cached for efficiency."""
-        self.node_name = '_TaleSpire_Shared_Data_'
-        self.shared_data_node = hou.node('/obj/{}'.format(self.node_name))
-        if not self.shared_data_node:
-            self.shared_data_node = hou.node('/obj').createNode('TaleSpire_Shared_Data', node_name=self.node_name)
-            self.hide()
-
-    def hide(self, state=True):
-        self.shared_data_node.hide(state)
-
-    def get_database_node(self):
-        database_node = hou.node('{}/data/TS_Database'.format(self.shared_data_node.path()))
-        return database_node
-
-    def get_data_node(self):
-        data_node = hou.node('{}/data'.format(self.shared_data_node.path()))
-        return data_node
-
-    def cook_database_node(self):
-        database_node = self.get_database_node()
-        database_node.cook(force=True)
 
 
 class NetworkIO:
