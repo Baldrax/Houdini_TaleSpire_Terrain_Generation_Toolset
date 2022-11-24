@@ -41,6 +41,19 @@ def write_config(parm=None):
             hou.ui.displayMessage('The Directory is not Valid. You must select a valid TaleSpire install directory.')
 
 
+def load_default_networks(node=None):
+    networks = {
+        'terrain_edit': 'TaleSpire_Terrain_terrain_edit_contents.net'
+    }
+    ts_common.load_networks(node, networks)
+
+
+def save_terrain_edit_network(node=None):
+    file_name = 'TaleSpire_Terrain_terrain_edit_contents.net'
+    net_node = hou.node(node.path() + '/terrain_edit')
+    ts_common.save_network(net_node, file_name, mode='node')
+
+
 def set_attributions(node=None):
     pts_node = hou.node(node.path()+'/terrain_props/DISPLAY')
 
