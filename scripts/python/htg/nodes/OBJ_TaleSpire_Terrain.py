@@ -43,7 +43,8 @@ def write_config(parm=None):
 
 def load_default_networks(node=None):
     networks = {
-        'terrain_edit': 'TaleSpire_Terrain_terrain_edit_contents.net'
+        'terrain_edit': 'TaleSpire_Terrain_terrain_edit_contents.net',
+        'biomes': 'TaleSpire_Terrain_biomes_contents.net'
     }
     ts_common.load_networks(node, networks)
 
@@ -51,6 +52,12 @@ def load_default_networks(node=None):
 def save_terrain_edit_network(node=None):
     file_name = 'TaleSpire_Terrain_terrain_edit_contents.net'
     net_node = hou.node(node.path() + '/terrain_edit')
+    ts_common.save_network(net_node, file_name, mode='node')
+
+
+def save_biome_edit_network(node=None):
+    file_name = 'TaleSpire_Terrain_biomes_contents.net'
+    net_node = hou.node(node.path() + '/biomes')
     ts_common.save_network(net_node, file_name, mode='node')
 
 
