@@ -203,19 +203,30 @@ def copy_slab_and_advance(node=None):
 
 
 def encode_slabs(node=None):
-    grid_node = hou.node(node.path() + '/Export_Slab/SLAB_GRID')
-    num_slabs = len(grid_node.geometry().prims())
-    slab_index_parm = node.parm('slabindex1')
-    og_index = slab_index_parm.eval()
+    num_assets = asset_count(node)
+    do_export = True
+    if num_assets >= 1000000:
+        button_result = hou.ui.displayMessage('Warning: This map contains more that 1 Million assets.\n'
+                                              'TaleSpire will likely crash.\n'
+                                              'Are you sure you want to do this?',
+                                              buttons=('OK', 'Cancel'))
+        if button_result != 0:
+            do_export = False
 
-    slab_json = []
-    for i in range(1, num_slabs + 1):
-        slab_index_parm.set(i)
-        slab_pos = get_slab_with_pos(node)
-        if slab_pos is not None:
-            slab_json.append(slab_pos)
-    htg.utils.copy_to_clipboard(json.dumps(slab_json))
-    slab_index_parm.set(og_index)
+    if do_export:
+            grid_node = hou.node(node.path() + '/Export_Slab/SLAB_GRID')
+            num_slabs = len(grid_node.geometry().prims())
+            slab_index_parm = node.parm('slabindex1')
+            og_index = slab_index_parm.eval()
+
+            slab_json = []
+            for i in range(1, num_slabs + 1):
+                slab_index_parm.set(i)
+                slab_pos = get_slab_with_pos(node)
+                if slab_pos is not None:
+                    slab_json.append(slab_pos)
+            htg.utils.copy_to_clipboard(json.dumps(slab_json))
+            slab_index_parm.set(og_index)
 
 
 def get_slab_with_pos(node=None):
@@ -270,3 +281,20 @@ def get_asset(uuid):
     uuid_dict = json.loads(node.userData('uuid_dict'))
     uuid_data = uuid_dict[uuid]
     return {"Id": uuid, "type": uuid_data['type']}
+
+
+def asset_count(node=None):
+    try:
+        asset_node = hou.node(node.path() + '/Export_Slab/TILES_AND_PROPS')
+        geo = asset_node.geometry()
+        points = geo.points()
+        num_assets = len(points)
+    except AttributeError:
+        num_assets = 0
+
+    return num_assets
+
+
+def show_asset_count(node=None):
+    num_assets = asset_count(node)
+    hou.ui.displayMessage('Total Asset Count:\n{}'.format(num_assets), details=str(num_assets))
