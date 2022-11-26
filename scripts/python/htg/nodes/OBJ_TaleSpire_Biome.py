@@ -1,5 +1,6 @@
 import hou
 import htg.utils
+import htg.nodes.common as ts_common
 
 
 def refresh_biome(node=None):
@@ -31,3 +32,30 @@ def default_biome_selected(node=None):
         for sib_node in node.parent().children():
             if sib_node.type().nameComponents()[2] == 'TaleSpire_Biome' and sib_node != node:
                 sib_node.parm('default_biome').set(0)
+
+
+def load_default_networks(node=None):
+    networks = {
+        'biome_objects': 'TaleSpire_Biome_biome_objects_contents.net',
+        'biome_tiles': 'TaleSpire_Biome_biome_tiles_contents.net',
+        'biome_props': 'TaleSpire_Biome_biome_props_contents.net'
+    }
+    ts_common.load_networks(node, networks)
+
+
+def save_biome_objects_network(node=None):
+    file_name = 'TaleSpire_Biome_biome_objects_contents.net'
+    net_node = hou.node(node.path() + '/biome_objects')
+    ts_common.save_network(net_node, file_name, mode='node')
+
+
+def save_biome_tiles_network(node=None):
+    file_name = 'TaleSpire_Biome_biome_tiles_contents.net'
+    net_node = hou.node(node.path() + '/biome_tiles')
+    ts_common.save_network(net_node, file_name, mode='node')
+
+
+def save_biome_props_network(node=None):
+    file_name = 'TaleSpire_Biome_biome_props_contents.net'
+    net_node = hou.node(node.path() + '/biome_props')
+    ts_common.save_network(net_node, file_name, mode='node')
