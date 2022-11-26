@@ -120,10 +120,9 @@ def save_network(net_node=None, filename=None, mode='node', warn=True):
                 do_write = False
 
     if do_write:
-        hou.ui.displayMessage('overwritting')
-        # net_io = NetworkIO(net_node, file_path)
-        # net_io.add_all()
-        # net_io.write_network()
+        net_io = NetworkIO(net_node, file_path)
+        net_io.add_all()
+        net_io.write_network()
 
 
 class NetworkIO:
