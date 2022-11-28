@@ -19,6 +19,7 @@ def get_current_pane(node=None):
 def set_network(current_node, dest_node):
     """Given a Houdini node, change the network to the destination node."""
     current_pane = get_current_pane(current_node)
+    # TODO: When network panel is full screen this creates an error
     current_pane.cd(dest_node.path())
 
 
