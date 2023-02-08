@@ -43,3 +43,8 @@ def decode_slab(node=None):
 
     slab_points_node = hou.node(node.path() + '/TS_Object/slab_points')
     slab_points_node.cook(force=True)
+
+
+def copy_slab(node=None):
+    export_node = hou.node(node.path()+'/TS_Object/Export')
+    export_node.parm('copy_slab').pressButton()
