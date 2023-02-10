@@ -27,13 +27,32 @@ craft your terrain. It is also the main interface for setting up the terrain and
 #### TaleSpire_Object
 This node is used to import a TaleSpire Tile, Prop or Slab for use in the system. It has controls over the 
 placement of these objects in regard to how they interact with other nodes like TaleSpire_Tiler and TaleSpire_Scatter.
+You can also export directly from this node, in case you just want to rotate or replace assets.
 #### TaleSpire_Biome
 This node defines a Biome which controls what TaleSpire Tiles and Props get put on to the terrain. It has 
 subnetworks within for defining sets of objects, rules for placing Tiles and rules for placing/scattering Props.
 #### TaleSpire_Tiler
 This node is used within the TaleSpire_Biome node to define what areas specific sets of tiles are placed on the terrain.
 #### TaleSpire_Scatter
-This node is used within the TaleSpire_Biome node to scatter props on to a terrain based on rules and masks.
+This node is used to scatter props on to a heightfield terrain based on rules and masks. It can work inside a
+TaleSpire_Biome node or externally if used with the new TaleSpire_Object_Set node.
+
+### NEW Nodes!
+The following nodes are new as of v0.19.0-alpha and are considered Work In Progress.
+Some features may be missing or broken.
+#### TaleSpire_Copy
+This node allows you to place assets on specific points fed in to the 1st input. It can work
+inside or outside a biome. The 2nd input can be used to designate which objects to place on the 
+points, as defined in a TaleSpire_Object_Set node.
+#### TaleSpire_Object_Set
+This node is a container for TaleSpire_Object nodes, it works similar to the objects network
+in the TaleSpire_Biome node. This allows you to define sets of objects to use in nodes like 
+TaleSpire_Scatter and TaleSpire_Copy allowing those nodes to work external from a Biome if desired.
+#### TaleSpire_Export
+This node can take the data from TaleSpire_Scatter and TaleSpire_Copy nodes and export them directly
+to a slab or multi-slab without needing to set up a terrain.
+Its feature set is currently limited but will eventually support all the features of the terrain nodes export.
+
 
 ## Installation
 The installation instructions are available on the wiki.
