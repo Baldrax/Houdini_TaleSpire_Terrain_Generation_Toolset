@@ -16,6 +16,7 @@ def build_ts_database(node):
     geo.addAttrib(hou.attribType.Point, 'm_Center', hou.Vector3([0, 0, 0]))
     geo.addAttrib(hou.attribType.Point, 'm_Extent', hou.Vector3([0, 0, 0]))
     geo.addArrayAttrib(hou.attribType.Point, 'Tags', hou.attribData.String)
+    geo.addAttrib(hou.attribType.Point, 'Folder', '')
     geo.addAttrib(hou.attribType.Point, 'proxy_path', '')
 
     cfg = ts_configs.Configs()
@@ -62,6 +63,7 @@ def build_ts_database(node):
                         point.setAttribValue('IsDeprecated', asset_dict['IsDeprecated'])
                         point.setAttribValue('GroupTag', asset_dict['GroupTag'])
                         point.setAttribValue('Tags', asset_tags)
+                        point.setAttribValue('Folder', asset_dict['Folder'])
 
                         m_Center = asset_dict['ColliderBoundsBound']['m_Center']
                         m_Extent = asset_dict['ColliderBoundsBound']['m_Extent']
