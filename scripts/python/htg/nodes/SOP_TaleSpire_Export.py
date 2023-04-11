@@ -7,6 +7,7 @@ import hou
 
 
 def set_slab_range(node=None):
+    force_update(node)
     si1_parm = node.parm('slabindex1')
     si2_parm = node.parm('slabindex2')
     slabs_node = hou.node(node.path()+'/NUM_SLABS')
@@ -17,9 +18,16 @@ def set_slab_range(node=None):
 
 
 def copy_slab_from_node(node=None):
+    force_update(node)
     json_data = get_js(node)
     slab = ts_encode.encode(json_data)
     htg.utils.copy_to_clipboard(slab.strip("b'`"))
+
+
+def force_update(node=None):
+    current_frame = hou.frame()
+    grid_node = hou.node(node.path() + '/grid_neg_Z')
+    grid_node.cook(force=True, frame_range=(current_frame, current_frame+1))
 
 
 def get_js(geonode=None):
@@ -67,10 +75,11 @@ def get_slab_with_pos(node=None):
 
 
 def encode_slabs(node=None):
-    num_assets = 1  # Disabled while developing
+    force_update(node)
+    num_assets = asset_count(node)
     do_export = True
     if num_assets >= 1000000:
-        button_result = hou.ui.displayMessage('Warning: This map contains more that 1 Million assets.\n'
+        button_result = hou.ui.displayMessage('Warning: This export contains more that 1 Million assets.\n'
                                               'TaleSpire will likely crash.\n'
                                               'Are you sure you want to do this?',
                                               buttons=('OK', 'Cancel'))
@@ -91,3 +100,15 @@ def encode_slabs(node=None):
                 slab_json.append(slab_pos)
         htg.utils.copy_to_clipboard(json.dumps(slab_json))
         slab_index_parm.set(og_index)
+
+
+def asset_count(node=None):
+    try:
+        asset_node = hou.node(node.path() + '/INFO')
+        geo = asset_node.geometry()
+        points = geo.points()
+        num_assets = len(points)
+    except AttributeError:
+        num_assets = 0
+
+    return num_assets
