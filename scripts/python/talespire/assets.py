@@ -5,7 +5,7 @@ import json
 import os
 
 
-def get_assets(ts_directory):
+def get_asset_dicts(ts_directory):
     ts_index_files = list()
     taleweaver_dir = os.path.join(ts_directory, 'Taleweaver')
 
@@ -14,13 +14,15 @@ def get_assets(ts_directory):
         if 'index.json' in files:
             ts_index_files.append(os.path.join(root, 'index.json'))
 
-    index_dict_list = list()
+    asset_dicts = dict()
 
     for ts_index_file in ts_index_files:
         file = open(ts_index_file, 'r')
         data = file.read()
         file.close()
 
-        index_dict_list.append(json.loads(data))
+        index_dict = json.loads(data)
+        index_name = index_dict['Name']
+        asset_dicts[index_name] = {'path': ts_index_file, 'index': index_dict }
 
-    return index_dict_list
+    return asset_dicts
