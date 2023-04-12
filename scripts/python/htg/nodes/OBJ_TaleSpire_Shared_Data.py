@@ -26,11 +26,14 @@ def build_ts_database(node):
 
     cfg = ts_configs.Configs()
     ts_basepath = cfg.get_config('talespire_directory')
-    if not os.path.isdir(ts_basepath):
-        hou.ui.displayMessage('ERROR: TaleSpire directory not found, check the settings on the TaleSpire Terrain Node!',
+    asset_dicts = talespire.assets.get_asset_dicts(ts_basepath)
+
+    if asset_dicts is None or len(asset_dicts) == 0:
+        hou.ui.displayMessage('ERROR: Unable to find TaleSpire asset definitions, check the talespire_directory in '
+                              'the settings tab of the TaleSpire Terrain Node. TaleSpire must be installed on this '
+                              'machine in order to use the toolset.',
                               details=ts_basepath, severity=hou.severityType.Error)
         return None
-    asset_dicts = talespire.assets.get_asset_dicts(ts_basepath)
 
     proxy_names = []
     htg_basedir = hou.text.expandString('$HTG_BASEDIR')
