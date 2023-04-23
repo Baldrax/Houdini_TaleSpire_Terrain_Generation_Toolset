@@ -18,10 +18,15 @@ def set_slab_range(node=None):
 
 
 def copy_slab_from_node(node=None):
-    force_update(node)
     json_data = get_js(node)
     slab = ts_encode.encode(json_data)
     htg.utils.copy_to_clipboard(slab.strip("b'`"))
+
+
+def copy_slab(node=None):
+    slab_node = hou.node(node.path() + '/OUT')
+    force_update(node)
+    copy_slab_from_node(node=slab_node)
 
 
 def force_update(node=None):
