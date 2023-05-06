@@ -34,11 +34,8 @@ def write_config(parm=None):
     cfg.set_config(cfg_name, parm.eval())
 
     if cfg_name == 'talespire_directory':
-        if os.path.isdir(parm.eval()):
-            ts_data = ts_common.SharedData()
-            ts_data.cook_database_node()
-        else:
-            hou.ui.displayMessage('The Directory is not Valid. You must select a valid TaleSpire install directory.')
+        ts_data = ts_common.SharedData()
+        ts_data.cook_database_node()
 
 
 def load_default_networks(node=None):

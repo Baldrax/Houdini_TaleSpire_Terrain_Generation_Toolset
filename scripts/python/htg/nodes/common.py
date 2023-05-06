@@ -11,6 +11,26 @@ def ts_assets_menu():
     pass
 
 
+# What node am I in?
+def inside_node(node, node_type=None):
+    found_node = None
+    work_node = node.parent()
+    while work_node:
+        work_node_type = work_node.type().nameComponents()[2]
+        if node_type == work_node_type:
+            found_node = work_node
+            break
+        work_node = work_node.parent()
+
+    return found_node
+
+
+def inside_terrain_node(node):
+    """Finds the terrain node that the given node is inside, returns None if not in a terrain node."""
+    return inside_node(node, 'TaleSpire_Terrain')
+
+
+
 # Shared Data Node
 def get_ts_database_node():
     shared_data_node = SharedData()
