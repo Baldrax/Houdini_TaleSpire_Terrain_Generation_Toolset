@@ -228,6 +228,7 @@ def encode_slabs(node=None):
 
 def get_slab_with_pos(node=None):
     offset_node = hou.node(node.path() + '/Export_Slab/First_Tile')
+    offset_node.cook(force=True)
     geo = offset_node.geometry()
     point = geo.point(0)
     try:
