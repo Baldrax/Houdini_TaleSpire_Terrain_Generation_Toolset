@@ -25,9 +25,4 @@ def set_network(current_node, dest_node):
 
 # Clipboard
 def copy_to_clipboard(text):
-    r = Tk()
-    r.withdraw()
-    r.clipboard_clear()
-    r.clipboard_append(text)
-    r.update()
-    r.destroy()
+    hou.ui.copyTextToClipboard(text)
