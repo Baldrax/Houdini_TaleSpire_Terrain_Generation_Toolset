@@ -1,5 +1,4 @@
 import hou
-from tkinter import Tk
 
 
 # Pane Navigation
