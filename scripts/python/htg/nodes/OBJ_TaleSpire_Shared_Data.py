@@ -145,7 +145,7 @@ def process_images(node=None, geo=None, process_type='textures', force_all=False
         if icon_atlas not in img_dict:
             img_dict[icon_atlas] = []
 
-        if (not os.path.isfile(output_path) or force_all) and is_floor == 1:
+        if (not os.path.isfile(output_path) or force_all) and (is_floor == 1 or process_type != 'textures'):
             num_tasks += 1
             img_dict[icon_atlas].append({'uuid': uuid, 'region': icon_region, 'path': output_path})
 
