@@ -149,6 +149,12 @@ def process_images(node=None, geo=None, process_type='textures', force_all=False
             num_tasks += 1
             img_dict[icon_atlas].append({'uuid': uuid, 'region': icon_region, 'path': output_path})
 
+    if num_tasks > 0:
+        htg_basedir = hou.text.expandString('$HTG_BASEDIR')
+        image_dir = f'{htg_basedir}/images/cache/{process_type}'
+        if not os.path.lexists(image_dir):
+            os.makedirs(image_dir)
+
     with hou.InterruptableOperation(
         f'Processing {num_tasks} asset textures',
         open_interrupt_dialog=True
