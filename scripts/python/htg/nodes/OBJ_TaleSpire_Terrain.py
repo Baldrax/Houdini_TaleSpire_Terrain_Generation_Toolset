@@ -46,6 +46,11 @@ def load_default_networks(node=None):
     ts_common.load_networks(node, networks)
 
 
+def set_default_parms(node=None):
+    cfg_textured_tiles = node.parm('cfg_textured_tiles').eval()
+    node.parm('textured_tiles').set(cfg_textured_tiles)
+
+
 def save_terrain_edit_network(node=None):
     file_name = 'TaleSpire_Terrain_terrain_edit_contents.net'
     net_node = hou.node(node.path() + '/terrain_edit')
