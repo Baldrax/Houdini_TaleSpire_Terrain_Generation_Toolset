@@ -1,2 +1,4 @@
 # This is the version of the release.
-version = '1.0.0'
+# Should be updated whenever a push is done.
+# Include branch name on daily pushes. Only upgrade Major and Minor version when Pulling into the master branch.
+version = '0.20.3-dev'
