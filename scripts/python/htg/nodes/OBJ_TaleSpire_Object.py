@@ -18,6 +18,18 @@ def lock_collider(parm=None, cook=False):
             pass
 
 
+def set_output_obj(node=None):
+    out_obj_parm = node.parm('outputobj')
+
+    if out_obj_parm.eval() != 'OUT_TRANSFORM':
+        try:
+            out_obj_parm.lock(False)
+            out_obj_parm.set('OUT_TRANSFORM')
+            out_obj_parm.lock(True)
+        except hou.PermissionError:
+            pass
+
+
 def check_locks(node=None):
     """This is meant to lock all the footings when Houdini loads, but it isn't working, disabled for now."""
     parm = node.parm('footing_lock')
@@ -57,3 +69,55 @@ def decode_slab(node=None):
 def copy_slab(node=None):
     export_node = hou.node(node.path()+'/TS_Object/Export')
     export_node.parm('copy_slab').pressButton()
+
+
+def uuid_replace(uuid, replace_dict):
+    if uuid in replace_dict.keys():
+        return replace_dict[uuid]
+    else:
+        return uuid
+
+
+def generate_slab_points(node=None):
+    top_node = node.parent().parent()
+
+    geo = node.geometry()
+    geo.addAttrib(hou.attribType.Point, 'uuid', '')
+    geo.addAttrib(hou.attribType.Point, 'degree', 0)
+    geo.addAttrib(hou.attribType.Point, 'ts_x', 0)
+    geo.addAttrib(hou.attribType.Point, 'ts_y', 0)
+    geo.addAttrib(hou.attribType.Point, 'ts_z', 0)
+
+    num_replaces = top_node.parm('asset_replace').eval()
+    replace_dict = {}
+    for i in range(1, num_replaces + 1):
+        # hou.ui.displayMessage(i)
+        from_uuid = top_node.parm('from_uuid_{}'.format(i)).eval()
+        to_uuid = top_node.parm('to_uuid_{}'.format(i)).eval()
+        replace_dict[from_uuid] = to_uuid
+
+    if top_node.parm('obj_type').eval() == 'slab':
+        try:
+            data = json.loads(top_node.userData('ts_slab'))['asset_data']
+        except TypeError:
+            data = {}
+
+        for asset_data in data:
+            uuid = asset_data['uuid'].lower()
+            for instance in asset_data['instances']:
+                point = geo.createPoint()
+                tx = instance['x']
+                ty = instance['y']
+                tz = instance['z']
+                degree = instance['degree']
+
+                point.setPosition((float(tx) * .01, float(tz) * .01, -float(ty) * .01))
+                point.setAttribValue('degree', degree)
+                point.setAttribValue('uuid', uuid_replace(uuid, replace_dict))
+                point.setAttribValue('ts_x', tx)
+                point.setAttribValue('ts_y', ty)
+                point.setAttribValue('ts_z', tz)
+    else:
+        point = geo.createPoint()
+        point.setAttribValue('degree', 0)
+        point.setAttribValue('uuid', top_node.parm('ts_asset_uuid').eval())
