@@ -41,7 +41,7 @@ def check_locks(node=None):
 
 def recook_material(node=None):
     """When changing UUID the material doesn't always cook properly, this forces that"""
-    mat_node = hou.node(node.path() + '/TS_Object/material1')
+    mat_node = hou.node(node.path() + '/TS_Object/assign_proxies/material1')
     try:
         mat_node.cook(force=True)
     except hou.OperationFailed:
