@@ -169,10 +169,10 @@ def process_images(node=None, geo=None, process_type='textures', force_all=False
                 uuid = task_dict['uuid']
                 region = task_dict['region']
                 output_path = task_dict['path']
-                left = (region[0])*x_size
-                right = left+region[2]*x_size
-                lower = (1-region[1])*y_size
-                upper = lower-region[3]*y_size
+                left = region[0]
+                right = left+region[2]
+                lower = y_size-region[1]
+                upper = lower-region[3]
                 crop_area = (left, upper, right, lower)
                 texture_name = process_type[0:-1]
                 # print(f'Making {texture_name} for asset {uuid}')
