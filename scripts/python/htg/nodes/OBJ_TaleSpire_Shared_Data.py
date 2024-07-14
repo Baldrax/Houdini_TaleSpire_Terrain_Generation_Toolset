@@ -20,9 +20,11 @@ def build_ts_database(node):
     geo.addArrayAttrib(hou.attribType.Point, 'Tags', hou.attribData.String)
     geo.addAttrib(hou.attribType.Point, 'Folder', '')
     geo.addAttrib(hou.attribType.Point, 'proxy_path', '')
+    geo.addAttrib(hou.attribType.Point, 'uv_proxy_path', '')
     geo.addAttrib(hou.attribType.Point, 'texture_path', '')
     geo.addAttrib(hou.attribType.Point, 'IconAtlas', '')
     geo.addAttrib(hou.attribType.Point, 'IconRegion', hou.Vector4([0, 0, 0, 0]))
+    geo.addAttrib(hou.attribType.Point, 'is_floor', 0)
 
     cfg = ts_configs.Configs()
     ts_basepath = cfg.get_config('talespire_directory')
@@ -41,6 +43,7 @@ def build_ts_database(node):
         proxy_names.append(proxy_file.split('.')[0])
 
     seen_ids = []
+    is_missing_textures = False
     for index_name in asset_dicts:
         index_path = asset_dicts[index_name]['path']
         index_dict = asset_dicts[index_name]['index']
@@ -62,16 +65,16 @@ def build_ts_database(node):
 
                         tag_name = ''
                         if '2x2' in asset_tags:
-                            tag_name = ' 2x2'
+                            tag_name = '2x2'
                         elif '1x1' in asset_tags:
-                            tag_name = ' 1x1'
+                            tag_name = '1x1'
                         elif '1x2' in asset_tags:
-                            tag_name = ' 1x2'
+                            tag_name = '1x2'
                         elif '2x1' in asset_tags:
-                            tag_name = ' 2x1'
+                            tag_name = '2x1'
 
-                        if ('2x2' not in asset_name and '1x1' not in asset_name and type == 'Tiles'):
-                            asset_name += tag_name
+                        if '2x2' not in asset_name and '1x1' not in asset_name and type == 'Tiles':
+                            asset_name += f' {tag_name}'
 
                         point.setAttribValue('Name', asset_name)
                         point.setAttribValue('Type', type)
@@ -93,15 +96,22 @@ def build_ts_database(node):
                             is_floor = False
 
                         proxy_name = asset_name.replace(' ', '_').replace('/', '_').replace('(', '_').replace(')', '_')
+                        proxy_base_path = f'{htg_basedir}/geo/ts_proxies'
+
+                        if is_floor and tag_name in ('1x1', '2x2') and not asset_dict['IsDeprecated'] == 1:
+                            point.setAttribValue('is_floor', 1)
+                            point.setAttribValue('proxy_path',
+                                                 f'{proxy_base_path}/Standin_floor_{tag_name}.bgeo.sc')
+                            point.setAttribValue('uv_proxy_path',
+                                                 f'{proxy_base_path}/Textured_floor_{tag_name}.bgeo.sc')
+
                         if proxy_name in proxy_names:
-                            point.setAttribValue('proxy_path',
-                                                 '{}/geo/ts_proxies/{}.bgeo.sc'.format(htg_basedir, proxy_name))
-                        elif is_floor and tag_name.strip() in ('1x1', '2x2'):
-                            point.setAttribValue('proxy_path',
-                                                 '{}/geo/ts_proxies/Standin_floor_{}.bgeo.sc'.format(htg_basedir,
-                                                                                                     tag_name.strip()))
+                            # This will override the Standin_floor proxy_path above for floors that have a proxy.
+                            point.setAttribValue('proxy_path', f'{proxy_base_path}/{proxy_name}.bgeo.sc')
+
                         atlas_index = asset_dict['Icon']['AtlasIndex']
-                        point.setAttribValue('IconAtlas', os.path.join(os.path.dirname(index_path), icon_atlases[atlas_index]))
+                        point.setAttribValue('IconAtlas',
+                                             os.path.join(os.path.dirname(index_path), icon_atlases[atlas_index]))
                         atlas_region = asset_dict['Icon']['Region']
                         point.setAttribValue('IconRegion', hou.Vector4(
                             [atlas_region['x'],
@@ -109,46 +119,71 @@ def build_ts_database(node):
                              atlas_region['width'],
                              atlas_region['height']
                              ]))
+                        texture_path = f'{htg_basedir}/images/cache/textures/{uuid}.png'
+                        point.setAttribValue('texture_path', texture_path)
+                        if not os.path.isfile(texture_path):
+                            is_missing_textures = True
+
+    if is_missing_textures:
+        process_images(geo=geo)
 
 
-def process_images(node, process_type='textures'):
-    geo = node.geometry()
+def process_images(node=None, geo=None, process_type='textures', force_all=False):
+    if geo is None:
+        geo = node.geometry()
     img_dict = dict()
+
+    num_tasks = 0
 
     for point in geo.points():
         icon_atlas = point.attribValue('IconAtlas')
         icon_region = point.attribValue('IconRegion')
+        output_path = point.attribValue('texture_path').replace('textures', process_type)
+        is_floor = point.attribValue('is_floor')
         uuid = point.attribValue('Id')
 
-        if uuid == 'b83392b1-8833-43c9-a97f-2ac3df659e66' or True:
-            if icon_atlas not in img_dict:
-                img_dict[icon_atlas] = []
+        if icon_atlas not in img_dict:
+            img_dict[icon_atlas] = []
 
-            img_dict[icon_atlas].append({'uuid': uuid, 'region': icon_region})
+        if (not os.path.isfile(output_path) or force_all) and (is_floor == 1 or process_type != 'textures'):
+            num_tasks += 1
+            img_dict[icon_atlas].append({'uuid': uuid, 'region': icon_region, 'path': output_path})
 
-    for icon_atlas in img_dict:
-        task_list = img_dict[icon_atlas]
-        im = Image.open(icon_atlas)
-        x_size, y_size = im.size
-        print(icon_atlas)
+    if num_tasks > 0:
+        htg_basedir = hou.text.expandString('$HTG_BASEDIR')
+        image_dir = f'{htg_basedir}/images/cache/{process_type}'
+        if not os.path.lexists(image_dir):
+            os.makedirs(image_dir)
 
-        for task_dict in task_list:
-            uuid = task_dict['uuid']
-            region = task_dict['region']
-            output_path = '{}/images/cache/{}/{}.png'.format(hou.text.expandString('$HTG_BASEDIR'), process_type, uuid)
-            left = (region[0])*x_size
-            right = left+region[2]*x_size
-            lower = (1-region[1])*y_size
-            upper = lower-region[3]*y_size
-            crop_area = (left, upper, right, lower)
-            print(output_path)
-            print(crop_area)
-            img = im.crop(crop_area)
+    with hou.InterruptableOperation(
+        f'Processing {num_tasks} asset textures',
+        open_interrupt_dialog=True
+    ) as operation:
+        progress_index = 0
+        for icon_atlas in img_dict:
+            task_list = img_dict[icon_atlas]
+            im = Image.open(icon_atlas)
+            x_size, y_size = im.size
 
-            if process_type == 'textures':
-                img = simple_texture(img)
+            for task_dict in task_list:
+                uuid = task_dict['uuid']
+                region = task_dict['region']
+                output_path = task_dict['path']
+                left = region[0]
+                right = left+region[2]
+                lower = y_size-region[1]
+                upper = lower-region[3]
+                crop_area = (left, upper, right, lower)
+                texture_name = process_type[0:-1]
+                # print(f'Making {texture_name} for asset {uuid}')
+                img = im.crop(crop_area)
 
-            img.save(output_path)
+                if process_type == 'textures':
+                    img = simple_texture(img)
+
+                img.save(output_path)
+                progress_index += 1
+                operation.updateProgress( float(progress_index)/float(num_tasks))
 
 
 def simple_texture(image):

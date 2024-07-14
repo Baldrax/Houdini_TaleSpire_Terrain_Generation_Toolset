@@ -4,6 +4,8 @@ import base64
 import gzip
 import sys
 
+from talespire.exceptions import *
+
 
 def create_header(unique_asset_count):
     header = b'\xCE\xFA\xCE\xD1\x02\x00'
@@ -63,8 +65,7 @@ def encode(data):
     # gzip compress
     slab_compressed_data = gzip.compress(slab_data, compresslevel=9)
     if len(slab_compressed_data) > 30720:
-        print("Slab exceeds TaleSpire size limit of 30kB (30720 bytes) binary data! Aborting.")
-        sys.exit(1)
+        raise SlabExceedsSizeLimit("Slab exceeds TaleSpire size limit of 30kB (30720 bytes) binary data!")
 
     base64_bytes = base64.b64encode(slab_compressed_data)
     return str(b'```' + base64_bytes + b'```')

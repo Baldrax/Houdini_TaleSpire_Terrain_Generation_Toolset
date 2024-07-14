@@ -30,7 +30,6 @@ def inside_terrain_node(node):
     return inside_node(node, 'TaleSpire_Terrain')
 
 
-
 # Shared Data Node
 def get_ts_database_node():
     shared_data_node = SharedData()
