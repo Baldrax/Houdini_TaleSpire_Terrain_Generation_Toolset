@@ -20,6 +20,9 @@ Feature overview video:
 
 [<img src="https://user-images.githubusercontent.com/100365731/200082578-f8a54857-8b44-46fa-9ebf-432656713204.png">](https://www.youtube.com/watch?v=193IomvemaA)
 
+### Tutorial Video's
+For more instructional videos refer to the [Tutorials](https://github.com/Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset/wiki/Tutorials) page on the wiki.
+
 ### Current Nodes
 #### TaleSpire_Terrain
 The main node for managing a terrain project, this node contains subnetworks that allow a workspace to 
@@ -36,10 +39,6 @@ This node is used within the TaleSpire_Biome node to define what areas specific 
 #### TaleSpire_Scatter
 This node is used to scatter props on to a heightfield terrain based on rules and masks. It can work inside a
 TaleSpire_Biome node or externally if used with the new TaleSpire_Object_Set node.
-
-### NEW Nodes!
-The following nodes are new as of v0.19.0-alpha and are considered Work In Progress.
-Some features may be missing or broken.
 #### TaleSpire_Copy
 This node allows you to place assets on specific points fed in to the 1st input. It can work
 inside or outside a biome. The 2nd input can be used to designate which objects to place on the 
@@ -52,6 +51,26 @@ TaleSpire_Scatter and TaleSpire_Copy allowing those nodes to work external from 
 This node can take the data from TaleSpire_Scatter and TaleSpire_Copy nodes and export them directly
 to a slab or multi-slab without needing to set up a terrain.
 Its feature set is currently limited but will eventually support all the features of the terrain nodes export.
+#### TaleSpire_Fetch_Water
+This node can be used in biomes to get the water level of the heightfield. It can return a mask as either a 0-1 
+mask representing where water is and isn't, or a depth mask, which you can use to determine how far the current surface
+is above or below the waterline.
+#### TaleSpire_Set_Water_Level
+This node can be used in the terrain edit network to set the water level, either from the water plane or from a 2nd
+input which is a heightfield depicting the water level. This node is also used behind the scene to set the water level
+if you don't do it explicitly.
+#### TaleSpire_Preview
+This node is used to preview the results at various points in the network, usually after a TS Copy/Scatter/Tiler node or
+after merging the results of those nodes.
+
+### NEW Nodes!
+The following nodes are new as of v0.21.0-alpha and are considered Work In Progress.
+Some features may be missing or broken.
+
+#### TaleSpire_Cavern_Helper
+This is an object level node that allows you to input a floorplan layout of a cavern using the "Swamp Floor" 1x1 and/or 
+2x2 floor tiles in TS. More detailed notes on this node can be found on the 
+[wiki](https://github.com/Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset/wiki/TaleSpire_Cavern_Helper).
 
 
 ## Installation
@@ -71,6 +90,11 @@ few areas that may not work properly which are noted within the file.
 #### Biomes
 There is a scene file containing example biomes being used for development, more biomes will be available in
 the future. `hip/examples/biomes.hipnc`
+
+#### Geometric Shapes
+This scene file demonstrates multiple ways to make geometric shapes like spiral staircases
+brick smokestacks, towers, walls, tunnels and more.
+`hip/examples/geometric_examples.hipnc`
 
 ### Better with Mods!
 This tool supports use of a mod that allows multiple slab pastes at once. That's right, instead of laboriously hand 
