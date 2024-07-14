@@ -1,9 +1,31 @@
 # Most of the code in here is a duplicate of what is in OBJ_TaleSpire_Terrain as the features are being moved.
 #  Once this node is complete the redundant functions will be removed.
 import json
+import sys
 import htg.utils
 import talespire.encode as ts_encode
 import hou
+
+from talespire.exceptions import *
+
+
+def slab_too_large():
+    title = "Slab too large"
+    message = \
+        """A slab exceeded the maximum size TaleSpire allows.
+        To remedy this try lowering the slab size and running the operation again."""
+    hou.ui.displayMessage(message, title=title, severity=hou.severityType.Error)
+    sys.exit(1)
+
+
+def encode_slab(json_data):
+    try:
+        slab = ts_encode.encode(json_data)
+    except SlabExceedsSizeLimit:
+        slab = None
+        slab_too_large()
+
+    return slab
 
 
 def set_slab_range(node=None):
@@ -19,7 +41,7 @@ def set_slab_range(node=None):
 
 def copy_slab_from_node(node=None):
     json_data = get_js(node)
-    slab = ts_encode.encode(json_data)
+    slab = encode_slab(json_data)
     htg.utils.copy_to_clipboard(slab.strip("b'`"))
 
 
@@ -68,7 +90,7 @@ def get_slab_with_pos(node=None):
     try:
         pos = tuple(point.position())
         json_data = get_js(node)
-        slab = ts_encode.encode(json_data)
+        slab = encode_slab(json_data)
         out = {
             "position": {"x": pos[0], "y": pos[1], "z": -pos[2]},
             "code": slab.strip("b'`")
