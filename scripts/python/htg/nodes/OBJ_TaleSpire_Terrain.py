@@ -2,9 +2,9 @@ import hou
 import json
 import os
 import htg.utils
-import talespire.encode as ts_encode
 import htg.configs as ts_configs
 import htg.nodes.common as ts_common
+import htg.nodes.SOP_TaleSpire_Export as ts_export
 
 
 def read_configs(node=None):
@@ -19,7 +19,7 @@ def read_configs(node=None):
 def set_slab_range(node=None):
     si1_parm = node.parm('slabindex1')
     si2_parm = node.parm('slabindex2')
-    slabs_node = hou.node(node.path()+'/Export_Slab/NUM_SLABS')
+    slabs_node = hou.node(node.path() + '/Export_Slab/NUM_SLABS')
     num_points = len(slabs_node.geometry().points())
     si1_parm.set(1)
     si2_parm.deleteAllKeyframes()
@@ -64,7 +64,7 @@ def save_biome_edit_network(node=None):
 
 
 def set_attributions(node=None):
-    pts_node = hou.node(node.path()+'/terrain_props/DISPLAY')
+    pts_node = hou.node(node.path() + '/terrain_props/DISPLAY')
 
     authors = set([])
     data = {}
@@ -93,7 +93,7 @@ def set_attributions(node=None):
     else:
         dm = 'No Attributions Found.\n'
         dm += 'If you are using slab assets from other creators, please add the attributions to the ' \
-             'TaleSpire_Object nodes for those assets.'
+              'TaleSpire_Object nodes for those assets.'
         hou.ui.displayMessage(dm)
 
     if m != '':
@@ -184,17 +184,17 @@ def cache_uuids(node):
     db_geo = database_node.geometry()
     for point in db_geo.points():
         uuid = point.getAttribValue('Id')
-        type = point.getAttribValue('Type')
+        ts_type = point.getAttribValue('Type')
         uuid_dict[uuid] = {
             'ptnum': point.number(),
-            'type': type
+            'type': ts_type
         }
     node.setUserData('uuid_dict', json.dumps(uuid_dict))
 
 
 def copy_slab(node=None):
     json_data = get_js(node)
-    slab = ts_encode.encode(json_data)
+    slab = ts_export.encode_slab(json_data)
     htg.utils.copy_to_clipboard(slab.strip("b'`"))
 
 
@@ -216,19 +216,19 @@ def encode_slabs(node=None):
             do_export = False
 
     if do_export:
-            grid_node = hou.node(node.path() + '/Export_Slab/SLAB_GRID')
-            num_slabs = len(grid_node.geometry().prims())
-            slab_index_parm = node.parm('slabindex1')
-            og_index = slab_index_parm.eval()
+        grid_node = hou.node(node.path() + '/Export_Slab/SLAB_GRID')
+        num_slabs = len(grid_node.geometry().prims())
+        slab_index_parm = node.parm('slabindex1')
+        og_index = slab_index_parm.eval()
 
-            slab_json = []
-            for i in range(1, num_slabs + 1):
-                slab_index_parm.set(i)
-                slab_pos = get_slab_with_pos(node)
-                if slab_pos is not None:
-                    slab_json.append(slab_pos)
-            htg.utils.copy_to_clipboard(json.dumps(slab_json))
-            slab_index_parm.set(og_index)
+        slab_json = []
+        for i in range(1, num_slabs + 1):
+            slab_index_parm.set(i)
+            slab_pos = get_slab_with_pos(node)
+            if slab_pos is not None:
+                slab_json.append(slab_pos)
+        htg.utils.copy_to_clipboard(json.dumps(slab_json))
+        slab_index_parm.set(og_index)
 
 
 def get_slab_with_pos(node=None):
@@ -239,7 +239,9 @@ def get_slab_with_pos(node=None):
     try:
         pos = tuple(point.position())
         json_data = get_js(node)
-        slab = ts_encode.encode(json_data)
+
+        slab = ts_export.encode_slab(json_data)
+
         out = {
             "position": {"x": pos[0], "y": pos[1], "z": -pos[2]},
             "code": slab.strip("b'`")
