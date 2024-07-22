@@ -205,7 +205,7 @@ def copy_slab_and_advance(node=None):
 
 
 def encode_slabs(node=None):
-    num_assets = asset_count(node)
+    num_assets = asset_count(node)['num_assets']
     do_export = True
     if num_assets >= 1000000:
         button_result = hou.ui.displayMessage('Warning: This map contains more that 1 Million assets.\n'
@@ -288,18 +288,36 @@ def get_asset(uuid):
     return {"Id": uuid, "type": uuid_data['type']}
 
 
-def asset_count(node=None):
+def asset_count(node=None, unique=False):
+    results = {}
     try:
-        asset_node = hou.node(node.path() + '/Export_Slab/TILES_AND_PROPS')
+        asset_node = hou.node(node.path() + '/Export_Slab/FOR_EXPORT')
         geo = asset_node.geometry()
-        points = geo.points()
-        num_assets = len(points)
-    except AttributeError:
-        num_assets = 0
+        num_assets = len(geo.points())
+        num_tiles = len(geo.findPointGroup('tiles').points())
+        num_props = len(geo.findPointGroup('props').points())
+        results = {
+            'num_assets': num_assets,
+            'num_tiles': num_tiles,
+            'num_props': num_props
+        }
+        if unique:
+            unique_assets = set()
+            for point in geo.points():
+                unique_assets.add(point.attribValue('uuid'))
+            num_unique_assets = len(unique_assets)
+            results['num_unique_assets'] = num_unique_assets
 
-    return num_assets
+    except AttributeError:
+        pass
+
+    return results
 
 
 def show_asset_count(node=None):
-    num_assets = asset_count(node)
-    hou.ui.displayMessage('Total Asset Count:\n{}'.format(num_assets), details=str(num_assets))
+    asset_data = asset_count(node, unique=True)
+    message = f"Tiles: {asset_data['num_tiles']}\n"\
+              f"Props: {asset_data['num_props']}\n"\
+              f"Total Asset Count: {asset_data['num_assets']}\n\n"\
+              f"Unique Assets: {asset_data['num_unique_assets']}"
+    hou.ui.displayMessage('', details=message, details_expanded=True)
