@@ -1,0 +1,106 @@
+= TaleSpire Biome =
+
+"""Defines a Biome which controls what TaleSpire Tiles and Props get put on to the terrain."""
+=== Overview ===
+Defines a TaleSpire biome.
+
+All biomes except for the one marked "Default Biome" in the Biome Settings require a mask. These masks are set in the
+"Terrain Edit" area of the TaleSpire_Terrain node and accessible from the "Biome Mask Layer Name" on this node.
+
+NOTE:
+    When you set a node as the "Default Biome" it will disable that option on all other nodes in this network, however,
+    if you copy a node from somewhere else that has this toggle enabled you could end up with two biomes set as the
+    default biome and end up with unpredictable results.
+
+If this node is a sub-biome of another biome node, check the "Use as Sub-Biome" option, this will access the
+"Sub-Biome Settings" panel for more options.
+
+== Sub-Biomes ==
+Sub-Biomes do not place tiles or props like a normal biome, these networks can be ignored or their contents deleted.
+Instead of placing objects the sub-biome just instructs the main biome which objects to swap out. In
+"Edit Biome Objects", keep all the network boxes and objects in place with the same names but change the assets the
+TaleSpire_Object nodes are accessing.
+
+The point of a sub-biome is to replace the existing objects in the biome with different objects in the defined regions.
+So you can make a winter version of a map keeping all the trees and bushes in place and just changing them with
+something else.
+
+@parameters
+== General ==
+Disable Biome:
+    #id: disable_biome
+
+    If enabled this biome will not be used.
+
+Use as Sub-Biome:
+    #id: enable_sub_biome
+
+    If enabled this biome will be used as a sub-biome.
+
+Biome Mask Layer Name:
+    #id: biome_layer_name
+
+    The name of the heightfield layer to use as a mask for defining the region of this biome.
+
+Biome Priority:
+    #id: biome_priority
+
+    Priority for when biomes overlap. The higher priority will be applied in the case where the biome masks are equal.
+
+== Biome Settings ==
+Default Biome:
+    #id: default_biome
+
+    Defines this as the default biome, which means it applies to everything that isn't defined in another biome.
+    There should be only a single default biome defined in a terrain. If you enable this on one biome it will automatically be disabled on all other biomes in the same network.
+
+Scattering:
+    #id: biome_exclusion
+
+    Sets the default scattering behavior for the biome. The default, "Excludes Other Biomes", will only scatter objects
+    within the current biome. Setting this to "Includes Other Biomes" will cause the biome to scatter objects into all
+    other biomes. This can be overridden on individual TaleSpire_Scatter nodes.
+
+Sub Biomes:
+    #id: sub_biomes
+
+    Sets the number of sub-biomes to use.
+
+Sub Biome Node:
+    #id: sub_biome_#
+
+    The path to another biome node to be used as a sub-biome. The referenced biome should have "Use as Sub-Biome" set.
+
+== Sub-Biome Settings ==
+Mask Threshold:
+    #id: sb_mask_threshold
+
+    If the mask value is above this threshold it will be included in the sub-biome.
+
+Mask Jitter:
+    #id: sb_mask_jitter
+
+    Noise added to the mask to randomize the edge of biomes. This works best if your mask has a large feather to the edge.
+
+== Navigation ==
+Edit Biome Objects:
+    #id: edit_objects
+
+    Navigates to the sub-network to define the TaleSpire objects used to define this biome.
+
+Edit Tiles:
+    #id: edit_tiles
+
+    Navigates to the sub-network to define where tiles are placed on the terrain.
+
+Edit Props:
+    #id: edit_props
+
+    Navigates to the sub-network to define where objects are placed/scattered on the terrain.
+~~~
+Refresh Biome:
+    #id: refresh_biome
+    When changing the objects and sets in the "Edit Objects" area it is sometimes necessary to use this button to refresh the biome.
+
+@related
+* [Node:obj/TaleSpire_Terrain]
