@@ -1,0 +1,235 @@
+= TaleSpire Terrain =
+
+"""The main node for creating a terrain for TaleSpire."""
+
+== Overview ==
+Controls and sub-networks for creating and exporting a terrain to TaleSpire.
+
+@parameters
+=== Map Setup ===
+Terrain Name:
+    #id: terrain_name
+
+    The name used to store data on disk. The default, $OS, uses the name of the node.
+
+Terrain Size:
+    #id: terrain_size
+
+    The size of the map in tiles in both X and Z.  Y being Up.
+
+Max Tile Stack:
+    #id: terrain_stack_max
+
+    The maximum number of tiles to stack under the surface tile, this will fill vertical gaps in steep terrain.
+
+==== Water ====
+Enable Water Plane:
+    #id: enable_water
+
+    When enabled, the water plane is used within the system.
+
+Show Water Plane:
+    #id: show_water
+
+    When enabled, the water plane is visible in the viewport.
+
+Water Plane Level:
+    #id: water_level
+
+    The height of the water plane. For interactivity, you may want to turn off "Enable Water Plane" while adjusting this.
+
+Max Water Tile Depth:
+    #id: water_stack_max
+
+    The maximum number of tiles to stack under the water surface.
+
+Enable Water Tile Generation:
+    #id: enable_water_tile_gen
+
+    When enabled, water tiles will be generated when needed.
+
+Exclude Water Tiles Below Water Plane:
+    #id: exclude_tiles_below_water_plane
+
+    When enabled, and the water plane is active, no water tiles will be generated under the water plane.
+
+==== Ground ====
+Show TS Board Level:
+    #id: show_ground
+
+    When enabled, the board level (Ground Plane) in TaleSpire will be shown.
+
+Automatically Determine Board Level:
+    #id: auto_ground_plane
+
+    When enabled, the ground plane will be automatically set slighly under the lowest asset on the map.
+
+Board Level:
+    #id: ground_level
+
+    The height of the ground plane.
+=== Display Options ===
+Display Heightfield Terrain:
+    #id: display_terrain
+
+    Toggles visibility of the heightfield terrain.
+
+Display Tiles:
+    #id: display_tiles
+
+    Toggles visibility of the surface tiles of the terrain.
+
+Display Props:
+    #id: display_props
+
+    Toggles visibility of the props/objects on the terrain.
+
+Textured Tiles:
+    #id: textured_tiles
+
+    Toggles the visibility of textured floor tiles.
+
+BBOX LOD Size Cutoff:
+    #id: bbox_lod_vis_size
+
+    A threshold for turning off the display of objects represented by bounding boxes based on their size.
+    The higher this value, large and larger bounding boxes will be hidden from view but the objects will still be exported.
+
+=== Edit ===
+Edit Terrain:
+    #id: edit_terrain
+
+    Navigates to the terrain editing network to sculpt the terrain and setup masks.
+
+Build/Cache Terrain Tiles:
+    #id: cache_terrain_tiles
+
+    Re-calculates and saves out the base tiles for the terrain.
+    This builds the 1x1 and 2x2 tiles of the surface terrain, it should be done every time the terrain is edited,
+    and when new biomes are defined or biome masks are changed.
+
+Edit Biomes:
+    #id: edit_biomes
+
+    Navigates to the biomes network to create and edit the TaleSpire_Biome nodes that populate the terrain.
+
+=== Export ===
+
+==== Limit Area ====
+Export Limited Area:
+    #id: export_limited_area
+
+    When enabled, exporting of the map will be limited to an area defined by the "Bounding Box Geo"
+
+Bounding Box Geo:
+    #id: limit_bbox_geo
+
+    The path to an object to use as the bounding box to limit the area of the map to be exported.
+    A houdini object node can be dragged into this field to link it.
+
+==== Slab Orientation and Order ====
+Show North:
+    #id: show_north
+
+    Toggles the visibility of an arrow over the terrain that points North.
+
+North Direction:
+    #id: north_dir
+
+    Sets the north direction of the map.
+
+Reorient Slab Order:
+    #id: reorient_slab_order
+
+    Uses the "North Direction" to re-orient the slabs so the slabs are placed from West to East and North to South.
+
+Zig Zag Slab Order:
+    #id: zig_zag_slab_order
+
+    Reverses the order of the slabs every other row, so if you are placing slabs manually you don't have to move your camera as far.
+==== Export Controls ====
+Display Slab Bounds:
+    #id: display_current_slab
+
+    Toggles the visibility of the bounding box of the current slab.
+
+Slab Size:
+    #id: slabsize
+
+    Sets the max size of the slabs to be exported. If you get a slab size error when exporting this will need to be lowered.
+
+Get Slab Index Range:
+     #id: set_slab_range
+
+     Calculates how many slabs are needed, based off the the "Slabe Size", and sets the Slab Index range.
+
+Slab Index:
+    #id: slabindex
+
+    Two fields that depict the currently active slab and the total number of slabs.
+
+Use Registration Marks:
+    #id: use_reg_marks
+
+    When enabled, registration tiles will be exported along with the slab. These are red tiles below the surface of the
+    slab that help with manually placing the slabs in TaleSpire.
+
+Copy Current Slab:
+    #id: copy_current_slab
+
+    Copies the currently active slab to the clipboard so it can be pasted into TaleSpire.
+
+Copy Slab and Advance:
+    #id: copy_slab_plus
+
+    Copies the currently active slab to the clipboard and advances the slab index to the next slab.
+    This allows you to repeatedly press this button to manually place every slab in the map.
+
+Multi Copy Slabs:
+    #id: multi_copy_slabs
+
+    Copies all slabs to the clipboard at once. This requires the Multi-Paste Slabs mod to paste into TaleSpire but saves a ton of time.
+==== Multi Slab Offset ====
+Offset:
+    #id: multi_slab_offset
+
+    When using "Multi Copy Slabs" this offset applies to the entire map within TaleSpire.
+
+=== Attributions ===
+Generate:
+    #id: generate_attributions
+
+    Analyzes all the slabs used to make this map and generates a list of attributions.
+
+Copy to Clipboard:
+    #id: clip_attributions
+
+    Copies the list of attributions to the clipboard so they can be pasted elsewhere.
+
+Attributions:
+    #id: attribution_string
+
+    The attributions generated. To utilizes attributions they must be set on the TaleSpire_Object nodes in your biomes.
+=== Settings ===
+==== Configs ====
+Refresh Configs:
+    #id: cfg_refresh
+
+    Reloads the configs from disk in case they were changed while this file was open.
+
+TaleSpire Directory:
+    #id: cfg_talespire_directory
+
+    The base directory of where TaleSpire is installed on the filesystem. The toolset will not work if TaleSpire is not installed on the same machine.
+
+Textured Tiles Enabled by Default:
+    #id: cfg_textured_tiles
+
+    If enabled, all new TaleSpire_Terrain nodes will have textured_tiles enabled when placed.
+
+==== Hacks ====
+Force Recook all the things!:
+    #id: cook_the_things
+
+    Forces a recook of the terrain and biomes in case things are not looking as expected.
+    This shouldn't have to be used much anymore, most of the re-cooking issues have been dealt with.
