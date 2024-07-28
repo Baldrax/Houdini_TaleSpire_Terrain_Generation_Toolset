@@ -88,6 +88,12 @@ Edit Biome Objects:
 
     Navigates to the sub-network to define the TaleSpire objects used to define this biome.
 
+Edit Biome Masks:
+    #id: edit_masks
+
+    Navigates to the sub-network to define layer masks for this biome, the masks set in here can be accessed in both the
+    tile and props networks.
+
 Edit Tiles:
     #id: edit_tiles
 

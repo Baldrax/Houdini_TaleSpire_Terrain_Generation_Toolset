@@ -16,6 +16,17 @@ def edit_objects(node=None):
     htg.utils.set_network(node, dest_node)
 
 
+def edit_masks(node=None):
+    networks = {
+        'biome_masks': 'TaleSpire_Biome_biome_masks_contents.net'
+    }
+
+    dest_node = hou.node(node.path() + '/biome_masks')
+    if len(dest_node.children()) == 0:
+        ts_common.load_networks(node, networks)
+    htg.utils.set_network(node, dest_node)
+
+
 def edit_tiles(node=None):
     dest_node = hou.node(node.path() + '/biome_tiles')
     htg.utils.set_network(node, dest_node)
@@ -46,6 +57,12 @@ def load_default_networks(node=None):
 def save_biome_objects_network(node=None):
     file_name = 'TaleSpire_Biome_biome_objects_contents.net'
     net_node = hou.node(node.path() + '/biome_objects')
+    ts_common.save_network(net_node, file_name, mode='node')
+
+
+def save_biome_masks_network(node=None):
+    file_name = 'TaleSpire_Biome_biome_masks_contents.net'
+    net_node = hou.node(node.path() + '/biome_masks')
     ts_common.save_network(net_node, file_name, mode='node')
 
 
