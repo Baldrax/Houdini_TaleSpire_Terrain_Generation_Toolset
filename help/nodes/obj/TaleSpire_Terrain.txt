@@ -1,3 +1,13 @@
+<style>
+.fieldborder {
+ border-width:3px;
+ border-style:solid;
+ border-color:#424242;
+ background-color:#000000;
+ color:#e3e3e3;
+}
+</style>
+
 = TaleSpire Terrain =
 
 """The main node for creating a terrain for TaleSpire."""
@@ -189,6 +199,23 @@ Multi Copy Slabs:
     #id: multi_copy_slabs
 
     Copies all slabs to the clipboard at once. This requires the Multi-Paste Slabs mod to paste into TaleSpire but saves a ton of time.
+
+Use Range List:
+    #id: multi_use_list
+
+    Enable to use a list of slabs as an export, for testing, or if the export missed a few slabs.
+
+Range List:
+    #id: multi_range_list
+
+    A comma separated list of ranges to use for exporting slabs.
+    - Individual slabs: <span class="fieldborder">&nbsp; 8, 13, 22 &nbsp;</span>
+    - Ranges: <span class="fieldborder">&nbsp; 1-10, 21-30 &nbsp;</span>
+    - Ranges with increments: <span class="fieldborder">&nbsp; 1-30:2 &nbsp;</span>
+    - Full Range with increment: <span class="fieldborder">&nbsp; 1:3 &nbsp;</span>
+    - Full Range with offset increment: <span class="fieldborder">&nbsp; 2:3 &nbsp;</span> ...
+    <span class="fieldborder">&nbsp; 3:3 &nbsp;</span>
+
 ==== Multi Slab Offset ====
 Offset:
     #id: multi_slab_offset

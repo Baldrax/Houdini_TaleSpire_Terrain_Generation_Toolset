@@ -222,13 +222,53 @@ def encode_slabs(node=None):
         og_index = slab_index_parm.eval()
 
         slab_json = []
-        for i in range(1, num_slabs + 1):
+        multi_use_list = node.parm('multi_use_list').eval() == 1
+        if multi_use_list:
+            range_list_string = node.parm('multi_range_list').eval()
+            range_list = multi_range(range_list_string, num_slabs)
+        else:
+            range_list = range(1, num_slabs + 1)
+
+        for i in range_list:
             slab_index_parm.set(i)
             slab_pos = get_slab_with_pos(node)
             if slab_pos is not None:
                 slab_json.append(slab_pos)
         htg.utils.copy_to_clipboard(json.dumps(slab_json))
         slab_index_parm.set(og_index)
+
+
+def multi_range(range_string, num_slabs=None):
+    range_list = [x.strip() for x in range_string.split(",")]
+    output_list = []
+    for range_item in range_list:
+        inc_split = range_item.split(":")
+        if len(inc_split) == 2:
+            inc = int(inc_split[-1])
+        else:
+            inc = None
+
+        range_pair = inc_split[0].split("-")
+        if len(range_pair) == 1:
+            r_start = int(range_pair[0])
+            if inc:
+                output_list += range(r_start, num_slabs+1, inc)
+            else:
+                output_list += [r_start]
+        elif len(range_pair) == 2:
+            r_start, r_end = range_pair
+            r_start = int(r_start)
+            if r_end == "NSLABS":
+                r_end = num_slabs
+            else:
+                r_end = int(r_end)
+
+            if inc:
+                output_list += range(r_start, r_end+1, inc)
+            else:
+                output_list += range(r_start, r_end+1)
+
+    return output_list
 
 
 def get_slab_with_pos(node=None):
