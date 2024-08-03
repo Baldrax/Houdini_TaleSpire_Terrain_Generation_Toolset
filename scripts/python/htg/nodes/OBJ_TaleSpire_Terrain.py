@@ -205,7 +205,7 @@ def copy_slab_and_advance(node=None):
 
 
 def encode_slabs(node=None):
-    num_assets = asset_count(node)
+    num_assets = asset_count(node)['num_assets']
     do_export = True
     if num_assets >= 1000000:
         button_result = hou.ui.displayMessage('Warning: This map contains more that 1 Million assets.\n'
@@ -222,13 +222,53 @@ def encode_slabs(node=None):
         og_index = slab_index_parm.eval()
 
         slab_json = []
-        for i in range(1, num_slabs + 1):
+        multi_use_list = node.parm('multi_use_list').eval() == 1
+        if multi_use_list:
+            range_list_string = node.parm('multi_range_list').eval()
+            range_list = multi_range(range_list_string, num_slabs)
+        else:
+            range_list = range(1, num_slabs + 1)
+
+        for i in range_list:
             slab_index_parm.set(i)
             slab_pos = get_slab_with_pos(node)
             if slab_pos is not None:
                 slab_json.append(slab_pos)
         htg.utils.copy_to_clipboard(json.dumps(slab_json))
         slab_index_parm.set(og_index)
+
+
+def multi_range(range_string, num_slabs=None):
+    range_list = [x.strip() for x in range_string.split(",")]
+    output_list = []
+    for range_item in range_list:
+        inc_split = range_item.split(":")
+        if len(inc_split) == 2:
+            inc = int(inc_split[-1])
+        else:
+            inc = None
+
+        range_pair = inc_split[0].split("-")
+        if len(range_pair) == 1:
+            r_start = int(range_pair[0])
+            if inc:
+                output_list += range(r_start, num_slabs+1, inc)
+            else:
+                output_list += [r_start]
+        elif len(range_pair) == 2:
+            r_start, r_end = range_pair
+            r_start = int(r_start)
+            if r_end == "NSLABS":
+                r_end = num_slabs
+            else:
+                r_end = int(r_end)
+
+            if inc:
+                output_list += range(r_start, r_end+1, inc)
+            else:
+                output_list += range(r_start, r_end+1)
+
+    return output_list
 
 
 def get_slab_with_pos(node=None):
@@ -288,18 +328,36 @@ def get_asset(uuid):
     return {"Id": uuid, "type": uuid_data['type']}
 
 
-def asset_count(node=None):
+def asset_count(node=None, unique=False):
+    results = {}
     try:
-        asset_node = hou.node(node.path() + '/Export_Slab/TILES_AND_PROPS')
+        asset_node = hou.node(node.path() + '/Export_Slab/FOR_EXPORT')
         geo = asset_node.geometry()
-        points = geo.points()
-        num_assets = len(points)
-    except AttributeError:
-        num_assets = 0
+        num_assets = len(geo.points())
+        num_tiles = len(geo.findPointGroup('tiles').points())
+        num_props = len(geo.findPointGroup('props').points())
+        results = {
+            'num_assets': num_assets,
+            'num_tiles': num_tiles,
+            'num_props': num_props
+        }
+        if unique:
+            unique_assets = set()
+            for point in geo.points():
+                unique_assets.add(point.attribValue('uuid'))
+            num_unique_assets = len(unique_assets)
+            results['num_unique_assets'] = num_unique_assets
 
-    return num_assets
+    except AttributeError:
+        pass
+
+    return results
 
 
 def show_asset_count(node=None):
-    num_assets = asset_count(node)
-    hou.ui.displayMessage('Total Asset Count:\n{}'.format(num_assets), details=str(num_assets))
+    asset_data = asset_count(node, unique=True)
+    message = f"Tiles: {asset_data['num_tiles']}\n"\
+              f"Props: {asset_data['num_props']}\n"\
+              f"Total Asset Count: {asset_data['num_assets']}\n\n"\
+              f"Unique Assets: {asset_data['num_unique_assets']}"
+    hou.ui.displayMessage('', details=message, details_expanded=True)
