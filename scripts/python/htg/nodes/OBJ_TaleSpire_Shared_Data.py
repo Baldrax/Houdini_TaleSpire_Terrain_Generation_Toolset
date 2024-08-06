@@ -98,7 +98,9 @@ def build_ts_database(node):
                         proxy_name = asset_name.replace(' ', '_').replace('/', '_').replace('(', '_').replace(')', '_')
                         proxy_base_path = f'{htg_basedir}/geo/ts_proxies'
 
-                        if is_floor and tag_name in ('1x1', '2x2') and not asset_dict['IsDeprecated'] == 1:
+                        if (is_floor and tag_name in ('1x1', '2x2')
+                                and not asset_dict['IsDeprecated'] == 1
+                                and not "tempwater" in asset_name.lower()):
                             point.setAttribValue('is_floor', 1)
                             point.setAttribValue('proxy_path',
                                                  f'{proxy_base_path}/Standin_floor_{tag_name}.bgeo.sc')
