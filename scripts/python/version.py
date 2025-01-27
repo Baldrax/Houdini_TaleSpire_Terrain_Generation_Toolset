@@ -2,4 +2,4 @@
 # Should be updated whenever a push is done.
 # Include branch name on daily pushes. Only upgrade Major and Minor version when Pulling into the master branch.
 
-version = '0.23.4-dev'
+version = '0.24.0'
