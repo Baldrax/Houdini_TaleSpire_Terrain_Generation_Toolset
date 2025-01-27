@@ -27,51 +27,73 @@ For more instructional videos refer to the [Tutorials](https://github.com/Baldra
 #### TaleSpire_Terrain
 The main node for managing a terrain project, this node contains subnetworks that allow a workspace to 
 craft your terrain. It is also the main interface for setting up the terrain and exporting the final results.
+
 #### TaleSpire_Object
 This node is used to import a TaleSpire Tile, Prop or Slab for use in the system. It has controls over the 
 placement of these objects in regard to how they interact with other nodes like TaleSpire_Tiler and TaleSpire_Scatter.
 You can also export directly from this node, in case you just want to rotate or replace assets.
+
 #### TaleSpire_Biome
 This node defines a Biome which controls what TaleSpire Tiles and Props get put on to the terrain. It has 
 subnetworks within for defining sets of objects, rules for placing Tiles and rules for placing/scattering Props.
+
 #### TaleSpire_Tiler
 This node is used within the TaleSpire_Biome node to define what areas specific sets of tiles are placed on the terrain.
+
 #### TaleSpire_Scatter
 This node is used to scatter props on to a heightfield terrain based on rules and masks. It can work inside a
 TaleSpire_Biome node or externally if used with the new TaleSpire_Object_Set node.
+
 #### TaleSpire_Copy
 This node allows you to place assets on specific points fed in to the 1st input. It can work
 inside or outside a biome. The 2nd input can be used to designate which objects to place on the 
 points, as defined in a TaleSpire_Object_Set node.
+
 #### TaleSpire_Object_Set
 This node is a container for TaleSpire_Object nodes, it works similar to the objects network
 in the TaleSpire_Biome node. This allows you to define sets of objects to use in nodes like 
 TaleSpire_Scatter and TaleSpire_Copy allowing those nodes to work external from a Biome if desired.
+
 #### TaleSpire_Export
 This node can take the data from TaleSpire_Scatter and TaleSpire_Copy nodes and export them directly
 to a slab or multi-slab without needing to set up a terrain.
 Its feature set is currently limited but will eventually support all the features of the terrain nodes export.
+
 #### TaleSpire_Fetch_Water
 This node can be used in biomes to get the water level of the heightfield. It can return a mask as either a 0-1 
 mask representing where water is and isn't, or a depth mask, which you can use to determine how far the current surface
 is above or below the waterline.
+
 #### TaleSpire_Set_Water_Level
 This node can be used in the terrain edit network to set the water level, either from the water plane or from a 2nd
 input which is a heightfield depicting the water level. This node is also used behind the scene to set the water level
 if you don't do it explicitly.
+
 #### TaleSpire_Preview
 This node is used to preview the results at various points in the network, usually after a TS Copy/Scatter/Tiler node or
 after merging the results of those nodes.
-
-### NEW Nodes!
-The following nodes are new as of v0.21.0-alpha and are considered Work In Progress.
-Some features may be missing or broken.
 
 #### TaleSpire_Cavern_Helper
 This is an object level node that allows you to input a floorplan layout of a cavern using the "Swamp Floor" 1x1 and/or 
 2x2 floor tiles in TS. More detailed notes on this node can be found on the 
 [wiki](https://github.com/Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset/wiki/TaleSpire_Cavern_Helper).
 
+### NEW Nodes!
+The following nodes are new as of v0.24.0-alpha and are considered Work In Progress.
+Some features may be missing or broken.
+
+#### TaleSpire_Heightfield_Mask_Distance
+A useful heightfield based node to calculate a distance based off of the incoming mask.
+
+#### TaleSpire_Heightfield_Pocket_Mask
+Generates scattered pockets within a mask on a heightfield. Useful for sparse masks or pockets of items you want to 
+scatter.
+
+#### TaleSpire_Heightfield_Tile_Edge_Mask
+Creates a mask around the edges of ground tiles. Useful for hiding the height transition between tiles.
+
+#### TaleSpire_Heightfield_Remap
+An alternative to the stock Houdini Heightfield Remap node that fixes a bug with ramps and allows for repetitive ramps.
 
 ## Installation
 The installation instructions are available on the wiki.
