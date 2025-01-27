@@ -1,0 +1,57 @@
+= TaleSpire Heightfield Remap =
+
+"""Remap the selected layer"""
+=== Overview ===
+Remap the incoming layer to the output results, optionally remap to a ramp.
+
+NOTE:
+    This is similar to the stock Heightfield Remap node but fixes an issue when using ramps. This also supports
+    repeatable ramps.
+    It does not offset the values outside the range when using clamping like the stock node does, please
+    supply feedback if you want this option.
+
+@parameters
+Layer to Remap:
+    #id: layer
+
+    The layer to remap.
+
+Invert Results:
+    #id: invert
+
+    Invert the final output.
+
+Input Range Min:
+    #id: input_min
+
+    The lowest value of the input to map from.
+
+Input Range Max:
+    #id: input_max
+
+    The highest value of the input to map from.
+
+Output Range Min:
+    #id: output_min
+
+    The minimum value in the output to map to.
+
+Output Range Max:
+    #id: output_max
+
+    The maximum value in the output to map to.
+
+Clamp Results:
+    #id: clamp_results
+
+    Clamp the range values instead of interpolating the values outside the range.
+
+Use Ramp:
+    #id: use_ramp
+
+    Remap the input range to a ramp.
+
+Ramp:
+    #id: ramp
+
+    The ramp to map the range to, this is scaled by the output values.

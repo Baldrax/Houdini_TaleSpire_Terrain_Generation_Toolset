@@ -1,0 +1,67 @@
+= TaleSpire Heightfield Pocket Mask =
+
+"""Creates a mask by scattering spheres on the terrain."""
+=== Overview ===
+Create masks in pockets with control over density and distance.
+
+@parameters
+== Shape Parameters ==
+Scale:
+    #id: shap_scale
+
+    Overall scale of the shapes being scattered.
+
+Scale Range:
+    #id: shape_scale_range
+
+    Each shape will be randomly scaled between these two values.
+
+Noise Amp:
+    #id: shape_namp
+
+    Amplitude of the noise applied to each shape, a value of 0 will make each shape a sphere.
+
+Noise Element Size:
+    #id: shape_elementsize
+
+    The frequency of the noise applied to each shape.
+
+== Scatter Parameters ==
+Density:
+    #id: scat_density
+
+    The density of the scattered pockets across the surface.
+
+Outer Radius:
+    #id: scat_outerradius
+
+    Minimum distance each shape center should be from another shape.
+
+Seed:
+    #id: scatter_seed
+
+    The random seed offset for scattering and shape noise.
+
+Randomize seed per node:
+    #id: seed_add_name
+
+    When enabled, each instance of this node will get a different random seed. This is combined with the Seed value
+    above.
+    Renaming the node will also change the seed as it is based on the full path to the node.
+
+== Post Operations ==
+Invert:
+    #id: maskinvert
+
+    Inverts the result of the mask.
+
+Convert Mask to Height:
+    #id: post_to_height
+
+    The mask is copied into the height layer, overriding the incoming height of the terrain.
+
+Remove Mask:
+    #id: post_height_no_mask
+
+    Clears the mask layer, only available if "Convert Mask to Height" is enabled.
+

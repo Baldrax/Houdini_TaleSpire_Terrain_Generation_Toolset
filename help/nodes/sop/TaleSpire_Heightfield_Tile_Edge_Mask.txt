@@ -1,0 +1,32 @@
+= TaleSpire Heightfield Tile Edge Mask =
+
+"""Creates a mask based on the tile edges of the ground terrain."""
+=== Overview ===
+Defines a mask based on the tile edges of the ground terrain. Useful for scattering additional objects to mask
+the height transition of tiles.
+
+NOTE:
+    This node only works if it is inside a biome within a TaleSpire Terrain node.
+
+@parameters
+== General ==
+Tile Divisions:
+    #id: resscale
+
+    The number of times to divide the heightmap by based on the original tiles.
+
+Edge Smooth Radius:
+    #id: smoothradius
+
+    Amount (in voxels) to smooth the edge by.
+
+Output Uses Mask Resolution:
+    #id: output_mask_res
+
+    Output using the resolution of the mask instead of the input resolution.
+    This is recommended unless your input resolution is higher.
+
+Output Tile Heights:
+    #id: output_tile_height
+
+    Output the height of the tiles instead of the incoming height.

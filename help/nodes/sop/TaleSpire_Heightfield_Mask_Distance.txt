@@ -1,0 +1,164 @@
+= TaleSpire Heightfield Mask Distance =
+
+"""Calculate the distance from the incoming mask"""
+=== Overview ===
+Use the incoming mask to determine distance from that mask, optionally map ramps to that distance.
+
+@parameters
+== General ==
+Type:
+    #id: dist_type
+
+    The distance type to perform
+
+    Inside Mask:
+        Distance is performed inside the input mask.
+
+    Outside Mask:
+        Distance is performed outside the input mask.
+
+    In/Out Mask:
+        Distance is performed inside and outside the mask with options for controlling the ranges
+        and ramps separately.
+
+    Continuous:
+        Distance is performed where the edge of the mask is 0, inside are positive values and
+        outside are negative values. Giving a continuous slope similar to a signed distance field.
+
+Mask Threshold:
+    #id: mask_threshold
+
+    The threshold of the incoming mask value to base the distance calculation off of. If threshold value
+    must be between the min and max values of the incoming mask to work properly.
+
+Use Ramps:
+    #id: use_ramp
+
+    Toggle on to remap the input ranges via ramps.
+
+== Inside Range ==
+Input Range Min:
+    #id: in_input_min
+
+    The lowest value of the input to map from.
+
+Input Range Max:
+    #id: in_input_max
+
+    The highest value of the input to map from.
+
+Output Range Min:
+    #id: in_output_min
+
+    The minimum value in the output to map to.
+
+Output Range Max:
+    #id: in_output_max
+
+    The maximum value in the output to map to.
+
+Clamp to Output:
+    #id: in_clamp_to_output
+
+    Clamp the values to the output values instead of interpolating the values outside the range.
+    Not active when using ramps.
+
+Clamp input to Ramp:
+    #id: in_ramp_clamp
+
+    Clamp the input range to not extend past the ramp to prevent repeating the ramp.
+
+Inside Ramp:
+    #id: in_ramp
+
+    The ramp to map the range to, this is scaled by the output values.
+
+== Outside Range ==
+Input Range Min:
+    #id: out_input_min
+
+    The lowest value of the input to map from.
+
+Input Range Max:
+    #id: out_input_max
+
+    The highest value of the input to map from.
+
+Output Range Min:
+    #id: out_output_min
+
+    The minimum value in the output to map to.
+
+Output Range Max:
+    #id: out_output_max
+
+    The maximum value in the output to map to.
+
+Clamp to Output:
+    #id: out_clamp_to_output
+
+    Clamp the values to the output values instead of interpolating the values outside the range.
+    Not active when using ramps.
+
+Clamp input to Ramp:
+    #id: out_ramp_clamp
+
+    Clamp the input range to not extend past the ramp to prevent repeating the ramp.
+
+Outside Ramp:
+    #id: out_ramp
+
+    The ramp to map the range to, this is scaled by the output values.
+
+== Continuous Range ==
+Input Range Min:
+    #id: combo_input_min
+
+    The lowest value of the input to map from.
+
+Input Range Max:
+    #id: combo_input_max
+
+    The highest value of the input to map from.
+
+Output Range Min:
+    #id: combo_output_min
+
+    The minimum value in the output to map to.
+
+Output Range Max:
+    #id: combo_output_max
+
+    The maximum value in the output to map to.
+
+Clamp to Output:
+    #id: combo_clamp_to_output
+
+    Clamp the values to the output values instead of interpolating the values outside the range.
+    Not active when using ramps.
+
+Clamp input to Ramp:
+    #id: combo_ramp_clamp
+
+    Clamp the input range to not extend past the ramp to prevent repeating the ramp.
+
+Combo Ramp:
+    #id: combo_ramp
+
+    The ramp to map the range to, this is scaled by the output values.
+
+== Post Operations ==
+Invert:
+    #id: invert
+
+    Inverts the result of the mask.
+
+Convert Mask to Height:
+    #id: post_to_height
+
+    The mask is copied into the height layer, overriding the incoming height of the terrain.
+
+Remove Mask:
+    #id: post_height_no_mask
+
+    Clears the mask layer, only available if "Convert Mask to Height" is enabled.
