@@ -3,6 +3,9 @@
   "env": [
       {
         "HTG_BASEDIR": "$HOUDINI_PACKAGE_PATH/.."
+      },
+      {
+        "HTG_REPO_URL": "https://api.github.com/repos/Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset"
       }
     ]
 }
