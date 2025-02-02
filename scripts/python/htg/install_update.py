@@ -4,9 +4,10 @@ import json
 import os
 import sys
 import tempfile
-
+import warnings
 import time
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 # TODO: distutils is deprecated and will likely not be available in python 3.13, will
 #       need to find an alternative version comparison without installing python modules.
 from distutils.version import LooseVersion
@@ -21,6 +22,7 @@ from PySide2.QtWidgets import (
 from PySide2.QtCore import Qt, QThread, Signal
 from PySide2.QtGui import QTextCursor, QTextCharFormat, QColor
 
+# Options for Development and Debugging
 DEBUG = False
 START_PAGE = "NewInstall"
 INSTALL_EXISTS = None
@@ -96,6 +98,8 @@ def version_text(branch: str = "release", new_version: str | None = None) -> str
         Branch versions could be older than your current version.</p>"""
     return text
 
+def make_tempdir():
+    pass
 
 class InstallationWorker(QThread):
     log_update = Signal(str, str)  # message, color
@@ -234,7 +238,13 @@ class InstallDialog(QDialog):
         self.pages.append("Installation")
         self.init_installation_page()
 
-        self.stack.setCurrentIndex(self.pages.index(self.start_page))
+        if self.start_page == "Update":
+            # The Update page needs to check GitHub for updates and will not work during a new installation.
+            #  This ensures that the update page is only activated when it is called for which should only
+            #  be in an environment where the toolset is already installed.
+            self.activate_update_page()
+        else:
+            self.stack.setCurrentIndex(self.pages.index(self.start_page))
 
         layout = QVBoxLayout()
         layout.addWidget(self.stack)
@@ -286,7 +296,7 @@ class InstallDialog(QDialog):
         btn_layout.setAlignment(Qt.AlignRight)
 
         ok_button = QPushButton("Okay")
-        ok_button.clicked.connect(self.start_installation)
+        ok_button.clicked.connect(self.start_installation_from_new_install)
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
 
@@ -304,64 +314,6 @@ class InstallDialog(QDialog):
         # Initialize Page
         self.toggle_install_location()
 
-    def toggle_install_location(self):
-        is_checked = self.install_in_place.isChecked()
-        self.install_location.setEnabled(not is_checked)
-        self.browse_button.setEnabled(not is_checked)
-        self.toolset_directory_name.setEnabled(not is_checked)
-        self.toolset_directory_name_label.setEnabled(not is_checked)
-        self.install_directory_label.setEnabled(not is_checked)
-
-    def toolset_dir_name_changed(self):
-        dir_name = self.toolset_directory_name.text()
-        char_list = ["/", "\\", " ", "|", "+", "@", "#", "!", "*", ";", ":", "'", '"']
-        for char in char_list:
-            if char in dir_name:
-                dir_name = dir_name.replace(char, "_")
-        self.toolset_directory_name.setText(dir_name)
-
-
-    def select_directory(self):
-        directory = hou.ui.selectFile(file_type=hou.fileType.Directory)
-        if directory:
-            self.install_location.setText(directory)
-
-    def start_installation(self, install_type: str = ""):
-        self.stack.setCurrentIndex(self.pages.index("Installation"))
-        new_install=False
-        dl_url = ""
-        source_dir = ""
-        destination_dir = ""
-
-        self.worker = InstallationWorker(
-            install_type=install_type,
-            new_install=new_install,
-            dl_url=dl_url,
-            source_dir=source_dir,
-            destination_dir=destination_dir)
-
-        self.worker.log_update.connect(self.update_install)
-        self.worker.completed.connect(self.install_done)
-        self.worker.start()
-
-    def update_install(self, message, color):
-        cursor = self.install_window.textCursor()
-        cursor.movePosition(QTextCursor.End)
-
-        fmt = QTextCharFormat()
-        if color == "default":
-            fmt.setForeground(self.install_color)
-        else:
-            fmt.setForeground(QColor(color))
-        cursor.setCharFormat(fmt)
-        cursor.insertText(message)
-
-        self.install_window.setTextCursor(cursor)
-        self.install_window.ensureCursorVisible()
-
-    def install_done(self):
-        self.done_button.setEnabled(True)
-
     def init_already_installed_page(self):
         page_setup = QVBoxLayout()
         page_setup.setAlignment(Qt.AlignTop)
@@ -378,7 +330,7 @@ class InstallDialog(QDialog):
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
         update_button = QPushButton("Check for Updates")
-        update_button.clicked.connect(lambda: self.stack.setCurrentIndex(self.pages.index("Update")))
+        update_button.clicked.connect(self.activate_update_page)
         button_layout.addWidget(cancel_button)
         button_layout.addWidget(update_button)
 
@@ -405,7 +357,7 @@ class InstallDialog(QDialog):
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
         overwrite_button = QPushButton("Overwrite Existing Version")
-        overwrite_button.clicked.connect(self.start_installation)
+        overwrite_button.clicked.connect(self.start_installation_from_manual_update)
         install_button = QPushButton("Install New")
         install_button.clicked.connect(lambda: self.stack.setCurrentIndex(self.pages.index("NewInstall")))
 
@@ -471,7 +423,7 @@ class InstallDialog(QDialog):
         dl_cancel_button = QPushButton("Cancel")
         dl_cancel_button.clicked.connect(self.reject)
         dl_install_button = QPushButton("Download/Install")
-        dl_install_button.clicked.connect(self.start_installation)
+        dl_install_button.clicked.connect(self.start_installation_from_update)
         button_layout.addWidget(dl_cancel_button)
         button_layout.addWidget(dl_install_button)
 
@@ -481,23 +433,6 @@ class InstallDialog(QDialog):
         widget = QDialog()
         widget.setLayout(page_setup)
         self.stack.addWidget(widget)
-
-        self.branch_updated()
-
-    def branch_updated(self):
-        branch_value = self.branch_combo.currentText()
-        release_visible = branch_value == "Older Release"
-
-        self.release_combo.setVisible(release_visible)
-
-        branch = branch_value
-        if branch in ["Current Release", "Older Release"]:
-            branch = "release"
-
-        new_version = self.release_combo.currentText()
-        if branch_value == "Current Release":
-            new_version = get_releases()[0]["name"]
-        self.version_label.setText(version_text(branch=branch, new_version=new_version))
 
     def init_installation_page(self):
         page_setup = QVBoxLayout()
@@ -523,7 +458,98 @@ class InstallDialog(QDialog):
         widget.setLayout(page_setup)
         self.stack.addWidget(widget)
 
+    # New Install Page Functions
+    def toggle_install_location(self):
+        is_checked = self.install_in_place.isChecked()
+        self.install_location.setEnabled(not is_checked)
+        self.browse_button.setEnabled(not is_checked)
+        self.toolset_directory_name.setEnabled(not is_checked)
+        self.toolset_directory_name_label.setEnabled(not is_checked)
+        self.install_directory_label.setEnabled(not is_checked)
 
+    def select_directory(self):
+        directory = hou.ui.selectFile(file_type=hou.fileType.Directory)
+        if directory:
+            self.install_location.setText(directory)
+
+    def toolset_dir_name_changed(self):
+        dir_name = self.toolset_directory_name.text()
+        char_list = ["/", "\\", " ", "|", "+", "@", "#", "!", "*", ";", ":", "'", '"']
+        for char in char_list:
+            if char in dir_name:
+                dir_name = dir_name.replace(char, "_")
+        self.toolset_directory_name.setText(dir_name)
+
+    # Update Page Functions
+    def activate_update_page(self):
+        self.stack.setCurrentIndex(self.pages.index("Update"))
+        self.branch_updated()
+
+    def branch_updated(self):
+        branch_value = self.branch_combo.currentText()
+        release_visible = branch_value == "Older Release"
+
+        self.release_combo.setVisible(release_visible)
+
+        branch = branch_value
+        if branch in ["Current Release", "Older Release"]:
+            branch = "release"
+
+        new_version = self.release_combo.currentText()
+        if branch_value == "Current Release":
+            new_version = get_releases()[0]["name"]
+        self.version_label.setText(version_text(branch=branch, new_version=new_version))
+
+    # Installation Functions
+    def start_installation(self, install_type: str = ""):
+        self.stack.setCurrentIndex(self.pages.index("Installation"))
+        new_install=False
+        dl_url = ""
+        source_dir = ""
+        destination_dir = ""
+
+        self.worker = InstallationWorker(
+            install_type=install_type,
+            new_install=new_install,
+            dl_url=dl_url,
+            source_dir=source_dir,
+            destination_dir=destination_dir)
+
+        self.worker.log_update.connect(self.update_install)
+        self.worker.completed.connect(self.install_done)
+        self.worker.start()
+
+    def start_installation_from_new_install(self):
+        # Gather Data
+        self.start_installation()
+
+    def start_installation_from_update(self):
+        # Gather Data
+        self.start_installation()
+
+    def start_installation_from_manual_update(self):
+        # Gather Data
+        self.start_installation()
+
+    def update_install(self, message, color):
+        cursor = self.install_window.textCursor()
+        cursor.movePosition(QTextCursor.End)
+
+        text_format = QTextCharFormat()
+        if color == "default":
+            text_format.setForeground(self.install_color)
+        else:
+            text_format.setForeground(QColor(color))
+        cursor.setCharFormat(text_format)
+        cursor.insertText(message)
+
+        self.install_window.setTextCursor(cursor)
+        self.install_window.ensureCursorVisible()
+
+    def install_done(self):
+        self.done_button.setEnabled(True)
+
+    # Unused
     def insert_colored_text(self, widget, color, text):
         cursor = widget.textCursor()
         char_format = QTextCharFormat()
@@ -538,6 +564,7 @@ class InstallDialog(QDialog):
 
 
 def show(cmd_path: str | None = None):
+    # If the dialog already exists in hou.session close it before opening another one.
     if hasattr(hou.session, "install_dialog") and hou.session.install_dialog is not None:
         try:
             hou.session.install_dialog.close()
