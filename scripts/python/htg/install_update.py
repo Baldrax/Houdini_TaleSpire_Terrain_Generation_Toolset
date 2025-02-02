@@ -1,7 +1,14 @@
+from __future__ import annotations
+
 import json
 import os
 import sys
+import tempfile
 
+import time
+
+# TODO: distutils is deprecated and will likely not be available in python 3.13, will
+#       need to find an alternative version comparison without installing python modules.
 from distutils.version import LooseVersion
 from pathlib import Path
 
@@ -11,10 +18,11 @@ from PySide2.QtWidgets import (
     QPushButton, QDialog, QStackedWidget, QVBoxLayout, QLabel, QLineEdit, QHBoxLayout, QCheckBox,
     QComboBox, QSizePolicy, QTextEdit
 )
-from PySide2.QtCore import Qt
+from PySide2.QtCore import Qt, QThread, Signal
+from PySide2.QtGui import QTextCursor, QTextCharFormat, QColor
 
 
-def make_package_file(htg_dir=None):
+def make_package_file(htg_dir: str | None = None):
     user_pref_dir = os.environ.get("HOUDINI_USER_PREF_DIR")
     package_filename = f"{user_pref_dir}/packages/HTTGT.json"
     package_file = Path(package_filename)
@@ -26,7 +34,7 @@ def make_package_file(htg_dir=None):
         json.dump(json_data, f, indent=4)
 
 
-def get_branches():
+def get_branches() -> list:
     import requests
     if hasattr(hou.session, "htg_branches") and hou.session.htg_branches is not None:
         return hou.session.htg_branches
@@ -45,7 +53,7 @@ def get_branches():
                 return branch_list
 
 
-def get_releases():
+def get_releases() -> list:
     import requests
     if hasattr(hou.session, "htg_releases") and hou.session.htg_releases is not None:
         return hou.session.htg_releases
@@ -59,18 +67,19 @@ def get_releases():
             return releases
 
 
-def get_current_version():
+def get_current_version() -> str:
     from version import version as current_version
     return current_version
 
 
-def version_text(branch="dev", new_version="00.00.00"):
+def version_text(branch: str = "release", new_version: str | None = None) -> str:
     current_version = get_current_version()
-    is_newer = LooseVersion(new_version.lstrip("v")) > LooseVersion(current_version)
-    if is_newer:
-        ver_color = "green"
-    else:
-        ver_color = "red"
+
+    ver_color = "red"
+    if new_version:
+        is_newer = LooseVersion(new_version.lstrip("v")) > LooseVersion(current_version)
+        if is_newer:
+            ver_color = "green"
 
     text = f"""<p>Current Version: <span style="color:yellow; font-weight:bold;">v{current_version}</span></p>"""
 
@@ -83,11 +92,73 @@ def version_text(branch="dev", new_version="00.00.00"):
         Branch versions could be older than your current version.</p>"""
     return text
 
+
+class InstallationWorker(QThread):
+    log_update = Signal(str, str)  # message, color
+    completed = Signal()
+
+    def __init__(
+            self,
+            install_type: str | None = None,
+            new_install: bool = False,
+            dl_url: str | None = None,
+            source_dir: str | None = None,
+            destination_dir: str | None = None
+    ):
+        super().__init__()
+        # type: "download", "copy", "in-place"
+        self.install_type = install_type
+        self.new_install = new_install
+        self.dl_url = dl_url
+        self.source_dir = source_dir
+        self.destination_dir = destination_dir
+
+    def run(self):
+        # Download - type "download"
+        self.log_update.emit("Downloading", "yellow")
+        time.sleep(.5)
+        self.log_update.emit(".........", "default")
+        time.sleep(.5)
+        self.log_update.emit("Done\n", "green")
+
+        # Unzip - type "download"
+        self.log_update.emit("Unzipping", "yellow")
+        time.sleep(.5)
+        self.log_update.emit(".........", "default")
+        time.sleep(.5)
+        self.log_update.emit("Done\n", "green")
+
+        # Copy Files - type "download", "copy"
+        self.log_update.emit("Copying Files", "yellow")
+        time.sleep(.5)
+        self.log_update.emit(".........", "default")
+        time.sleep(.5)
+        self.log_update.emit("Done\n", "green")
+
+        # Create Package File - new_install
+        self.log_update.emit("Creating Package File", "yellow")
+        time.sleep(.5)
+        self.log_update.emit(".........", "default")
+        time.sleep(.5)
+        self.log_update.emit("Done\n", "green")
+
+        # Cleanup - type "download"
+        self.log_update.emit("Cleaning Up", "yellow")
+        time.sleep(.5)
+        self.log_update.emit(".........", "default")
+        time.sleep(.5)
+        self.log_update.emit("Done\n", "green")
+
+        self.log_update.emit("\nRelaunch Houdini for changes to take effect.\n", "cyan")
+
+        self.completed.emit()
+
+
 class InstallDialog(QDialog):
 
     LABEL_WIDTH = 50
 
-    def __init__(self, cmd_path=None):
+    def __init__(self, cmd_path: str | None = None):
         parent = hou.qt.mainWindow()
         super().__init__(parent, Qt.Window)
         self.setWindowTitle("HTG Toolset Install/Update")
@@ -129,7 +200,9 @@ class InstallDialog(QDialog):
         self.release_combo = None
         self.version_label = None
         self.install_window = None
+        self.install_color = None
         self.done_button = None
+        self.worker = None
 
         self.pages = []
         self.stack = QStackedWidget(self)
@@ -200,8 +273,41 @@ class InstallDialog(QDialog):
         if directory:
             self.install_location.setText(directory)
 
-    def start_installation(self):
+    def start_installation(self, install_type: str = ""):
         self.stack.setCurrentIndex(self.pages.index("Installation"))
+        new_install=False
+        dl_url = ""
+        source_dir = ""
+        destination_dir = ""
+
+        self.worker = InstallationWorker(
+            install_type=install_type,
+            new_install=new_install,
+            dl_url=dl_url,
+            source_dir=source_dir,
+            destination_dir=destination_dir)
+
+        self.worker.log_update.connect(self.update_install)
+        self.worker.completed.connect(self.install_done)
+        self.worker.start()
+
+    def update_install(self, message, color):
+        cursor = self.install_window.textCursor()
+        cursor.movePosition(QTextCursor.End)
+
+        fmt = QTextCharFormat()
+        if color == "default":
+            fmt.setForeground(self.install_color)
+        else:
+            fmt.setForeground(QColor(color))
+        cursor.setCharFormat(fmt)
+        cursor.insertText(message)
+
+        self.install_window.setTextCursor(cursor)
+        self.install_window.ensureCursorVisible()
+
+    def install_done(self):
+        self.done_button.setEnabled(True)
 
     def init_manual_update_page(self):
         page_setup = QVBoxLayout()
@@ -301,6 +407,7 @@ class InstallDialog(QDialog):
         label = QLabel("Installing...")
         self.install_window = QTextEdit()
         self.install_window.setReadOnly(True)
+        self.install_color = self.install_window.palette().color(self.install_window.foregroundRole())
 
         page_setup.addWidget(label)
         page_setup.addWidget(self.install_window)
@@ -309,6 +416,7 @@ class InstallDialog(QDialog):
         button_layout.setAlignment(Qt.AlignRight)
         self.done_button = QPushButton("Done")
         self.done_button.setEnabled(False)
+        self.done_button.clicked.connect(self.accept)
         button_layout.addWidget(self.done_button)
 
         page_setup.addLayout(button_layout)
@@ -318,7 +426,20 @@ class InstallDialog(QDialog):
         self.stack.addWidget(widget)
 
 
-def show(cmd_path=None):
+    def insert_colored_text(self, widget, color, text):
+        cursor = widget.textCursor()
+        char_format = QTextCharFormat()
+
+        if color == "default":
+            char_format.setForeground(self.install_color)
+        else:
+            char_format.setForeground(QColor(color))
+
+        cursor.setCharFormat(char_format)
+        cursor.insertText(text)
+
+
+def show(cmd_path: str | None = None):
     if hasattr(hou.session, "install_dialog") and hou.session.install_dialog is not None:
         try:
             hou.session.install_dialog.close()
