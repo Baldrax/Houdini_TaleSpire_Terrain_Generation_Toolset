@@ -21,6 +21,10 @@ from PySide2.QtWidgets import (
 from PySide2.QtCore import Qt, QThread, Signal
 from PySide2.QtGui import QTextCursor, QTextCharFormat, QColor
 
+DEBUG = False
+START_PAGE = "NewInstall"
+INSTALL_EXISTS = None
+REPORT_ONLY = True
 
 def make_package_file(htg_dir: str | None = None):
     user_pref_dir = os.environ.get("HOUDINI_USER_PREF_DIR")
@@ -185,22 +189,31 @@ class InstallDialog(QDialog):
 
         if self.ran_from_cmd and self.install_exists:
             if htg_path == self.cmd_path:
-                self.start_page = "ManualUpdate"
-            else:
                 self.start_page = "AlreadyInstalled"
+            else:
+                self.start_page = "ManualUpdate"
         elif self.ran_from_cmd:
             self.start_page = "NewInstall"
         else:
             self.start_page = "Update"
 
+        if DEBUG:
+            if START_PAGE:
+                self.start_page = START_PAGE
+            if INSTALL_EXISTS:
+                self.install_exists = INSTALL_EXISTS
+
         self.install_in_place = None
         self.install_location = None
         self.browse_button = None
         self.branch_combo = None
+        self.install_directory_label = None
+        self.toolset_directory_name_label = None
         self.release_combo = None
         self.version_label = None
         self.install_window = None
         self.install_color = None
+        self.toolset_directory_name = None
         self.done_button = None
         self.worker = None
 
@@ -213,7 +226,7 @@ class InstallDialog(QDialog):
         self.init_already_installed_page()
 
         self.pages.append("NewInstall")
-        self.init_setup_page()
+        self.init_new_install_page()
 
         self.pages.append("Update")
         self.init_update_page()
@@ -227,46 +240,86 @@ class InstallDialog(QDialog):
         layout.addWidget(self.stack)
         self.setLayout(layout)
 
-    def init_setup_page(self):
+    def init_new_install_page(self):
+        # Base page layout
         page_setup = QVBoxLayout()
+        page_setup.setAlignment(Qt.AlignTop)
+
+        label = QLabel("<h3>New Install</h3><hr>")
+        page_setup.addWidget(label)
+
+        # Install in Place Toggle
         self.install_in_place = QCheckBox("Install in Place")
+        self.install_in_place.setToolTip("If enabled the toolset will be used from its current location. "
+                                         "No files will be moved.\n"
+                                         "This can Also be used to set up the toolset to use with a new major version "
+                                         "of Houdini.")
         self.install_in_place.setChecked(False)
         self.install_in_place.stateChanged.connect(self.toggle_install_location)
+        page_setup.addWidget(self.install_in_place)
 
-        install_location_label = QLabel("Install Location:")
+        # Install Directory Label
+        self.install_directory_label = QLabel("Select the base directory where the toolset will be installed.\n"
+                                         "The toolset directory will be created inside this directory:")
+        page_setup.addWidget(self.install_directory_label)
+
+        # Install Location Row
+        h_layout = QHBoxLayout()
         self.install_location = QLineEdit()
         self.install_location.setReadOnly(True)
         self.browse_button = QPushButton(text="Browse")
         self.browse_button.clicked.connect(self.select_directory)
 
-        h_layout = QHBoxLayout()
         h_layout.addWidget(self.install_location)
         h_layout.addWidget(self.browse_button)
+        page_setup.addLayout(h_layout)
+
+        # Toolset Directory
+        self.toolset_directory_name_label = QLabel("Toolset Directory Name:")
+        self.toolset_directory_name = QLineEdit("Houdini_TaleSpire_Terrain_Generation_Toolset")
+        self.toolset_directory_name.textChanged.connect(self.toolset_dir_name_changed)
+        page_setup.addWidget(self.toolset_directory_name_label)
+        page_setup.addWidget(self.toolset_directory_name)
+
+        # Bottom Button Row
+        btn_layout = QHBoxLayout()
+        btn_layout.setAlignment(Qt.AlignRight)
 
         ok_button = QPushButton("Okay")
         ok_button.clicked.connect(self.start_installation)
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
 
-        btn_layout = QHBoxLayout()
-        btn_layout.addWidget(ok_button)
         btn_layout.addWidget(cancel_button)
+        btn_layout.addWidget(ok_button)
 
-        page_setup.addWidget(self.install_in_place)
-        page_setup.addWidget(install_location_label)
-        page_setup.addLayout(h_layout)
+        page_setup.addStretch()
         page_setup.addLayout(btn_layout)
 
+        # Page Addition
         widget = QDialog()
         widget.setLayout(page_setup)
         self.stack.addWidget(widget)
 
+        # Initialize Page
         self.toggle_install_location()
 
     def toggle_install_location(self):
         is_checked = self.install_in_place.isChecked()
         self.install_location.setEnabled(not is_checked)
         self.browse_button.setEnabled(not is_checked)
+        self.toolset_directory_name.setEnabled(not is_checked)
+        self.toolset_directory_name_label.setEnabled(not is_checked)
+        self.install_directory_label.setEnabled(not is_checked)
+
+    def toolset_dir_name_changed(self):
+        dir_name = self.toolset_directory_name.text()
+        char_list = ["/", "\\", " ", "|", "+", "@", "#", "!", "*", ";", ":", "'", '"']
+        for char in char_list:
+            if char in dir_name:
+                dir_name = dir_name.replace(char, "_")
+        self.toolset_directory_name.setText(dir_name)
+
 
     def select_directory(self):
         directory = hou.ui.selectFile(file_type=hou.fileType.Directory)
@@ -309,18 +362,60 @@ class InstallDialog(QDialog):
     def install_done(self):
         self.done_button.setEnabled(True)
 
-    def init_manual_update_page(self):
+    def init_already_installed_page(self):
         page_setup = QVBoxLayout()
-        label = QLabel("Manual Update Page")
+        page_setup.setAlignment(Qt.AlignTop)
+        label = QLabel("<h3>Toolset Already Installed</h3>"
+                       "<hr>"
+                       "<p>It appears that this version of the toolset is already installed and ready to use. "
+                       "If you've downloaded and unzipped a new version of the toolset, <b>Cancel</b> this dialog and "
+                       "run the install.cmd file from that location. Otherwise you can <b>Check for Updates</b>.</p>")
+        label.setWordWrap(True)
         page_setup.addWidget(label)
+
+        button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignRight)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(self.reject)
+        update_button = QPushButton("Check for Updates")
+        update_button.clicked.connect(lambda: self.stack.setCurrentIndex(self.pages.index("Update")))
+        button_layout.addWidget(cancel_button)
+        button_layout.addWidget(update_button)
+
+        page_setup.addStretch()
+        page_setup.addLayout(button_layout)
+
         widget = QDialog()
         widget.setLayout(page_setup)
         self.stack.addWidget(widget)
 
-    def init_already_installed_page(self):
+    def init_manual_update_page(self):
         page_setup = QVBoxLayout()
-        label = QLabel("install.cmd ran from existing Install.")
+        page_setup.setAlignment(Qt.AlignTop)
+        label = QLabel("<h3>Manual Update</h3>"
+                       "<hr>"
+                       "<p>The toolset is already installed in another location. You can &quot;<b>Overwrite Existing "
+                       "Version</b>&quot; with this version or &quot;<b>Install New</b>&quot;, installing this "
+                       "version in-place or in a new location.")
+        label.setWordWrap(True)
         page_setup.addWidget(label)
+
+        button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignRight)
+        cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(self.reject)
+        overwrite_button = QPushButton("Overwrite Existing Version")
+        overwrite_button.clicked.connect(self.start_installation)
+        install_button = QPushButton("Install New")
+        install_button.clicked.connect(lambda: self.stack.setCurrentIndex(self.pages.index("NewInstall")))
+
+        button_layout.addWidget(cancel_button)
+        button_layout.addWidget(install_button)
+        button_layout.addWidget(overwrite_button)
+
+        page_setup.addStretch()
+        page_setup.addLayout(button_layout)
+
         widget = QDialog()
         widget.setLayout(page_setup)
         self.stack.addWidget(widget)
@@ -328,6 +423,9 @@ class InstallDialog(QDialog):
     def init_update_page(self):
         page_setup = QVBoxLayout()
         page_setup.setAlignment(Qt.AlignTop)
+
+        label = QLabel("<h3>Toolset Update</h3><hr>")
+        page_setup.addWidget(label)
 
         branch_layout = QHBoxLayout()
         branch_label = QLabel("Branch:")
@@ -404,7 +502,7 @@ class InstallDialog(QDialog):
     def init_installation_page(self):
         page_setup = QVBoxLayout()
         page_setup.setAlignment(Qt.AlignTop)
-        label = QLabel("Installing...")
+        label = QLabel("<h3>Installing...</h3>")
         self.install_window = QTextEdit()
         self.install_window.setReadOnly(True)
         self.install_color = self.install_window.palette().color(self.install_window.foregroundRole())
