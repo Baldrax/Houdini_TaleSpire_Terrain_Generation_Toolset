@@ -195,7 +195,16 @@ def show(cmd_path=None):
     hou.session.install_dialog = dialog
     dialog.show()
 
+# This checks to see if this script was executed from a menu within Houdini, if so it launches the dialog.
+try:
+    open_dialog = "toolname" in kwargs
+    show()
+except NameError:
+    open_dialog = False
 
 if __name__ == "__main__":
-    cmd_base_dir = sys.argv[1]
-    show(cmd_path=cmd_base_dir)
+    try:
+        cmd_base_dir = sys.argv[1]
+        show(cmd_path=cmd_base_dir)
+    except IndexError:
+        show()

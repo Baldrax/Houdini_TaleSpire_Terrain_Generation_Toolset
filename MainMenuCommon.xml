@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mainMenu>
+  <menuBar>
+      <subMenu id="htg_submenu">
+          <label>TaleSpire</label>
+
+          <scriptItem>
+              <label>Check for Updates</label>
+              <scriptPath>$HTG_BASEDIR/scripts/python/htg/install_update.py</scriptPath>
+          </scriptItem>
+      </subMenu>
+  </menuBar>
+</mainMenu>
