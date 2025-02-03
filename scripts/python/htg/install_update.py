@@ -49,7 +49,7 @@ def make_package_file(htg_dir: str | None = None):
 
     package_path = htg_dir / "packages"
 
-    json_data = { "package_path": f"{package_path}" }
+    json_data = { "package_path": f"{package_path.as_posix()}" }
 
     with package_file.open("w", encoding="UTF-8") as f:
         json.dump(json_data, f, indent=4)
@@ -618,7 +618,7 @@ class InstallDialog(QDialog):
         # Gather Data
         if self.install_in_place.isChecked():
             install_type = "in-place"
-            destination_dir = None
+            destination_dir = self.cmd_path
         else:
             install_type = "copy"
             base_dir = Path(hou.expandString(self.install_location.text()))
