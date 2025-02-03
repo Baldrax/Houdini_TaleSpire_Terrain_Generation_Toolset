@@ -24,6 +24,8 @@ from PySide2.QtWidgets import (
 from PySide2.QtCore import Qt, QThread, Signal
 from PySide2.QtGui import QTextCursor, QTextCharFormat, QColor
 
+REPO_NAME = "Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset"
+
 # Options for Development and Debugging
 DEBUG = False
 START_PAGE = "NewInstall"
@@ -46,18 +48,20 @@ def get_branches() -> list:
     if hasattr(hou.session, "htg_branches") and hou.session.htg_branches is not None:
         return hou.session.htg_branches
     else:
-        repo_url = os.environ.get("HTG_REPO_URL")
-        if repo_url:
-            branches_url = f"{repo_url}/branches"
+        repo_name = os.environ.get("HTG_REPO_NAME")
+        if repo_name is None:
+            repo_name = REPO_NAME
+        repo_url = f"https://api.github.com/repos/{repo_name}"
+        branches_url = f"{repo_url}/branches"
 
-            response = requests.get(branches_url)
-            if response.status_code == 200:
-                branches = response.json()
-                branch_list = []
-                for branch in branches:
-                    branch_list.append(branch["name"])
-                hou.session.htg_branches = branch_list
-                return branch_list
+        response = requests.get(branches_url)
+        if response.status_code == 200:
+            branches = response.json()
+            branch_list = []
+            for branch in branches:
+                branch_list.append(branch["name"])
+            hou.session.htg_branches = branch_list
+            return branch_list
 
 
 def get_releases() -> list:
@@ -129,15 +133,15 @@ class InstallationWorker(QThread):
             zip_file = Path(temp_dir.name) / "sourcefile.zip"
             source_dir = Path(temp_dir.name) / "sourcedir"
 
-            self.log_update.emit("Downloading", "yellow")
+            self.log_update.emit("Downloading ", "yellow")
             self.download_file(self.dl_url, zip_file)
-            self.log_update.emit("Done\n", "green")
+            self.log_update.emit(" Done\n", "green")
 
-            self.log_update.emit("Unzipping", "yellow")
+            self.log_update.emit("Unzipping ", "yellow")
             self.log_update.emit("..", "default")
             with zipfile.ZipFile(zip_file, 'r') as zipf:
                 zipf.extractall(source_dir)
-            self.log_update.emit("Done\n", "green")
+            self.log_update.emit(" Done\n", "green")
 
             # Set the source_dir to the directory inside the unzipped directory
             unzipped_dir = None
@@ -147,29 +151,35 @@ class InstallationWorker(QThread):
                 source_dir = unzipped_dir
 
         if self.do_copy:
-            self.log_update.emit("Copying Files", "yellow")
+            self.log_update.emit("Copying Files ", "yellow")
             files = list(source_dir.rglob("*"))
+            file_counter = 0
             for file in files:
                 dest_path = self.destination_dir / file.relative_to(source_dir)
                 if file.is_dir():
                     dest_path.mkdir(parents=True, exist_ok=True)
                 else:
                     shutil.copy2(file, dest_path)
-                    self.log_update.emit(".", "default")
-            self.log_update.emit("Done\n", "green")
+                    if file_counter > 0:
+                        # Emit a . every other file copied.
+                        self.log_update.emit(".", "default")
+                        file_counter = 0
+                    else:
+                        file_counter += 1
+            self.log_update.emit(" Done\n", "green")
 
         if self.new_install:
-            self.log_update.emit("Creating Package File", "yellow")
+            self.log_update.emit("Creating Package File ", "yellow")
             self.log_update.emit(".........", "default")
-            self.log_update.emit("Done\n", "green")
+            self.log_update.emit(" Done\n", "green")
 
         if self.do_download:
-            self.log_update.emit("Cleaning Up Temp Files", "yellow")
+            self.log_update.emit("Cleaning Up Temp Files ", "yellow")
             self.log_update.emit("..", "default")
             if temp_dir:
                 temp_dir.cleanup()
                 self.log_update.emit("..", "default")
-            self.log_update.emit("Done\n", "green")
+            self.log_update.emit(" Done\n", "green")
 
         self.log_update.emit("\nRelaunch Houdini for changes to take effect.\n", "cyan")
 
@@ -425,7 +435,6 @@ class InstallDialog(QDialog):
         self.branch_combo.addItem("Current Release")
         self.branch_combo.addItem("Older Release")
         skip_branches = ("master", "main")
-        skip_branches = ()
         for branch in get_branches():
             if branch not in skip_branches:
                 self.branch_combo.addItem(branch)
@@ -569,7 +578,10 @@ class InstallDialog(QDialog):
         elif branch == "Older Release":
             dl_url = hou.session.htg_releases[self.release_combo.currentIndex()]["zipball_url"]
         else:
-            repo_url = os.environ.get("HTG_REPO_URL")
+            repo_name = os.environ.get("HTG_REPO_NAME")
+            if repo_name is None:
+                repo_name = REPO_NAME
+            repo_url = f"https://github.com/{repo_name}"
             dl_url = f"{repo_url}/archive/refs/heads/{branch}.zip"
 
         destination_dir = self.htg_path
