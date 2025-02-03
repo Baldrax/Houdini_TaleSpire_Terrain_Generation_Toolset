@@ -45,7 +45,7 @@ def make_package_file(htg_dir: str | None = None):
     user_pref_dir = os.environ.get("HOUDINI_USER_PREF_DIR")
     package_filename = f"{user_pref_dir}/packages/HTTGT.json"
     package_file = Path(package_filename)
-    package_file.mkdir(exist_ok=True, parents=True)
+    package_file.parent.mkdir(exist_ok=True, parents=True)
 
     package_path = htg_dir / "packages"
 
@@ -79,13 +79,16 @@ def get_releases() -> list:
     if hasattr(hou.session, "htg_releases") and hou.session.htg_releases is not None:
         return hou.session.htg_releases
     else:
-        repo_url = os.environ.get("HTG_REPO_URL")
-        if repo_url:
-            repo = f"{repo_url}/releases?per_page=10&page=1"
-            response = requests.get(repo)
-            releases = response.json()
-            hou.session.htg_releases = releases
-            return releases
+        repo_name = os.environ.get("HTG_REPO_NAME")
+        if repo_name is None:
+            repo_name = REPO_NAME
+        repo_url = f"https://api.github.com/repos/{repo_name}"
+
+        repo = f"{repo_url}/releases?per_page=10&page=1"
+        response = requests.get(repo)
+        releases = response.json()
+        hou.session.htg_releases = releases
+        return releases
 
 
 def get_current_version() -> str:
@@ -476,16 +479,10 @@ class InstallDialog(QDialog):
         self.branch_combo = QComboBox()
         self.branch_combo.addItem("Current Release")
         self.branch_combo.addItem("Older Release")
-        skip_branches = ("master", "main")
-        for branch in get_branches():
-            if branch not in skip_branches:
-                self.branch_combo.addItem(branch)
         self.branch_combo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.branch_combo.setFixedHeight(label_height+10)
 
         self.release_combo = QComboBox()
-        for release in get_releases():
-            self.release_combo.addItem(release["name"])
         self.release_combo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.release_combo.setFixedHeight(label_height + 10)
         self.release_combo.setVisible(False)
@@ -568,6 +565,15 @@ class InstallDialog(QDialog):
 
     # Update Page Functions
     def activate_update_page(self):
+        skip_branches = ("master", "main")
+
+        for branch in get_branches():
+            if branch not in skip_branches:
+                self.branch_combo.addItem(branch)
+
+        for release in get_releases():
+            self.release_combo.addItem(release["name"])
+
         self.stack.setCurrentIndex(self.pages.index("Update"))
         self.branch_updated()
 
