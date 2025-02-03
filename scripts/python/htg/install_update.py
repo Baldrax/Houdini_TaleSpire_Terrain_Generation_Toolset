@@ -28,9 +28,18 @@ REPO_NAME = "Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset"
 
 # Options for Development and Debugging
 DEBUG = False
-START_PAGE = "NewInstall"
-INSTALL_EXISTS = None
+START_PAGE = None
+INSTALL_EXISTS = False
 REPORT_ONLY = True
+
+# Log Colors
+DATA = "#b38600" # Dark Amber
+FILES = "gray"
+STEP = "yellow"
+DOTS = "default"
+DONE = "green"
+INFO = "cyan"
+WARN = "red"
 
 def make_package_file(htg_dir: str | None = None):
     user_pref_dir = os.environ.get("HOUDINI_USER_PREF_DIR")
@@ -38,7 +47,9 @@ def make_package_file(htg_dir: str | None = None):
     package_file = Path(package_filename)
     package_file.mkdir(exist_ok=True, parents=True)
 
-    json_data = { "package_path": f"{htg_dir}/packages" }
+    package_path = htg_dir / "packages"
+
+    json_data = { "package_path": f"{package_path}" }
 
     with package_file.open("w", encoding="UTF-8") as f:
         json.dump(json_data, f, indent=4)
@@ -112,8 +123,8 @@ class InstallationWorker(QThread):
             install_type: str | None = None,
             new_install: bool = False,
             dl_url: str | None = None,
-            source_dir: str | None = None,
-            destination_dir: str | None = None
+            source_dir: Path | None = None,
+            destination_dir: Path | None = None
     ):
         super().__init__()
         # type: "download", "copy", "in-place"
@@ -124,64 +135,95 @@ class InstallationWorker(QThread):
         self.destination_dir = destination_dir
 
         self.do_download = self.install_type == "download"
-        self.do_copy = self.do_download
+        self.do_copy = self.do_download or self.install_type == "copy"
+
+        self.report_only = False
+        if DEBUG and REPORT_ONLY:
+            self.report_only = True
 
     def run(self):
+        source_dir = self.source_dir
+
         temp_dir = None
         if self.do_download:
             temp_dir = tempfile.TemporaryDirectory()
+            self.log_update.emit(f"Temp File Created:\n", DATA)
+            self.log_update.emit(f"{Path(temp_dir.name)}\n", FILES)
+
             zip_file = Path(temp_dir.name) / "sourcefile.zip"
             source_dir = Path(temp_dir.name) / "sourcedir"
 
-            self.log_update.emit("Downloading ", "yellow")
-            self.download_file(self.dl_url, zip_file)
-            self.log_update.emit(" Done\n", "green")
+            self.log_update.emit(f"Source URL:\n", DATA)
+            self.log_update.emit(f" {self.dl_url}\n", FILES)
+            self.log_update.emit(f"File Destination:\n", DATA)
+            self.log_update.emit(f"{zip_file}\n", FILES)
 
-            self.log_update.emit("Unzipping ", "yellow")
-            self.log_update.emit("..", "default")
-            with zipfile.ZipFile(zip_file, 'r') as zipf:
-                zipf.extractall(source_dir)
-            self.log_update.emit(" Done\n", "green")
+            self.log_update.emit("Downloading ", STEP)
+            if not self.report_only:
+                self.download_file(self.dl_url, zip_file)
+            self.log_update.emit(" Done\n\n", DONE)
+
+            self.log_update.emit(f"Unzipping To:\n", DATA)
+            self.log_update.emit(f"{source_dir}\n", FILES)
+            self.log_update.emit("Unzipping ", STEP)
+            self.log_update.emit("..", DOTS)
+            if not self.report_only:
+                with zipfile.ZipFile(zip_file, 'r') as zipf:
+                    zipf.extractall(source_dir)
+            self.log_update.emit(" Done\n\n", DONE)
 
             # Set the source_dir to the directory inside the unzipped directory
             unzipped_dir = None
-            for item in source_dir.iterdir():
-                unzipped_dir = item
-            if unzipped_dir:
-                source_dir = unzipped_dir
+            if not self.report_only:
+                for item in source_dir.iterdir():
+                    unzipped_dir = item
+                if unzipped_dir:
+                    source_dir = unzipped_dir
 
         if self.do_copy:
-            self.log_update.emit("Copying Files ", "yellow")
+            self.log_update.emit("Copy Source:\n", DATA)
+            self.log_update.emit(f"{source_dir}\n", FILES)
+            self.log_update.emit("Copy Destination:\n", DATA)
+            self.log_update.emit(f"{self.destination_dir}\n", FILES)
+
+            if not self.report_only:
+                self.destination_dir.mkdir(parents=True, exist_ok=True)
+
+            self.log_update.emit("Copying Files ", STEP)
             files = list(source_dir.rglob("*"))
             file_counter = 0
             for file in files:
                 dest_path = self.destination_dir / file.relative_to(source_dir)
                 if file.is_dir():
-                    dest_path.mkdir(parents=True, exist_ok=True)
+                    if not self.report_only:
+                        dest_path.mkdir(parents=True, exist_ok=True)
                 else:
-                    shutil.copy2(file, dest_path)
+                    if not self.report_only:
+                        shutil.copy2(file, dest_path)
                     if file_counter > 0:
                         # Emit a . every other file copied.
-                        self.log_update.emit(".", "default")
+                        self.log_update.emit(".", DOTS)
                         file_counter = 0
                     else:
                         file_counter += 1
-            self.log_update.emit(" Done\n", "green")
+            self.log_update.emit(" Done\n\n", DONE)
 
         if self.new_install:
-            self.log_update.emit("Creating Package File ", "yellow")
-            self.log_update.emit(".........", "default")
-            self.log_update.emit(" Done\n", "green")
+            self.log_update.emit("Creating Package File ", STEP)
+            self.log_update.emit("..", DOTS)
+            if not self.report_only:
+                make_package_file(self.destination_dir)
+            self.log_update.emit(" Done\n\n", DONE)
 
         if self.do_download:
-            self.log_update.emit("Cleaning Up Temp Files ", "yellow")
-            self.log_update.emit("..", "default")
+            self.log_update.emit("Cleaning Up Temp Files ", STEP)
+            self.log_update.emit("..", DOTS)
             if temp_dir:
                 temp_dir.cleanup()
-                self.log_update.emit("..", "default")
-            self.log_update.emit(" Done\n", "green")
+                self.log_update.emit("..", DOTS)
+            self.log_update.emit(" Done\n\n", DONE)
 
-        self.log_update.emit("\nRelaunch Houdini for changes to take effect.\n", "cyan")
+        self.log_update.emit("Relaunch Houdini for changes to take effect.\n", INFO)
 
         self.completed.emit()
 
@@ -203,7 +245,7 @@ class InstallationWorker(QThread):
                     file.write(chunk)
                     downloaded += len(chunk)
                     # percent_done = (downloaded / total_size) * 100
-                    self.log_update.emit(".", "default")
+                    self.log_update.emit(".", DOTS)
 
 class InstallDialog(QDialog):
 
@@ -219,7 +261,7 @@ class InstallDialog(QDialog):
 
         if cmd_path:
             self.ran_from_cmd = True
-            self.cmd_path = cmd_path
+            self.cmd_path = Path(cmd_path)
         else:
             self.ran_from_cmd = False
             self.cmd_path = None
@@ -322,7 +364,7 @@ class InstallDialog(QDialog):
         # Install Location Row
         h_layout = QHBoxLayout()
         self.install_location = QLineEdit()
-        self.install_location.setReadOnly(True)
+        self.install_location.setText("$HOME/TaleSpire/")
         self.browse_button = QPushButton(text="Browse")
         self.browse_button.clicked.connect(self.select_directory)
 
@@ -512,7 +554,7 @@ class InstallDialog(QDialog):
         self.install_directory_label.setEnabled(not is_checked)
 
     def select_directory(self):
-        directory = hou.ui.selectFile(file_type=hou.fileType.Directory)
+        directory = hou.ui.selectFile(file_type=hou.fileType.Directory, start_directory=self.install_location.text())
         if directory:
             self.install_location.setText(directory)
 
@@ -548,12 +590,12 @@ class InstallDialog(QDialog):
     # Installation Functions
     def start_installation(self,
                            install_type: str = "",
+                           new_install: bool = False,
                            dl_url: str | None = None,
                            source_dir: Path | None = None,
                            destination_dir: Path | None = None):
 
         self.stack.setCurrentIndex(self.pages.index("Installation"))
-        new_install=False
 
         self.worker = InstallationWorker(
             install_type=install_type,
@@ -568,7 +610,21 @@ class InstallDialog(QDialog):
 
     def start_installation_from_new_install(self):
         # Gather Data
-        self.start_installation()
+        if self.install_in_place.isChecked():
+            install_type = "in-place"
+            destination_dir = None
+        else:
+            install_type = "copy"
+            base_dir = Path(hou.expandString(self.install_location.text()))
+            dir_name = hou.expandString(self.toolset_directory_name.text())
+            destination_dir = base_dir / dir_name
+
+        self.start_installation(
+            install_type=install_type,
+            new_install=True,
+            source_dir=self.cmd_path,
+            destination_dir=destination_dir
+        )
 
     def start_installation_from_update(self):
         # Gather Data
@@ -585,9 +641,6 @@ class InstallDialog(QDialog):
             dl_url = f"{repo_url}/archive/refs/heads/{branch}.zip"
 
         destination_dir = self.htg_path
-        # TODO: Remove temporary directory override.
-        destination_dir = Path("D:/Users/Jeff/Documents/Temp/Foo")
-        destination_dir.mkdir(parents=True, exist_ok=True)
 
         self.start_installation(
             install_type="download",
@@ -596,8 +649,11 @@ class InstallDialog(QDialog):
         )
 
     def start_installation_from_manual_update(self):
-        # Gather Data
-        self.start_installation()
+        self.start_installation(
+            install_type="copy",
+            source_dir=self.cmd_path,
+            destination_dir=self.htg_path
+        )
 
     def update_install(self, message, color):
         cursor = self.install_window.textCursor()
