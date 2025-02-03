@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 import os
+import requests
+import shutil
 import sys
 import tempfile
 import warnings
-import time
+import zipfile
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 # TODO: distutils is deprecated and will likely not be available in python 3.13, will
@@ -41,7 +43,6 @@ def make_package_file(htg_dir: str | None = None):
 
 
 def get_branches() -> list:
-    import requests
     if hasattr(hou.session, "htg_branches") and hou.session.htg_branches is not None:
         return hou.session.htg_branches
     else:
@@ -60,7 +61,6 @@ def get_branches() -> list:
 
 
 def get_releases() -> list:
-    import requests
     if hasattr(hou.session, "htg_releases") and hou.session.htg_releases is not None:
         return hou.session.htg_releases
     else:
@@ -98,8 +98,6 @@ def version_text(branch: str = "release", new_version: str | None = None) -> str
         Branch versions could be older than your current version.</p>"""
     return text
 
-def make_tempdir():
-    pass
 
 class InstallationWorker(QThread):
     log_update = Signal(str, str)  # message, color
@@ -121,46 +119,81 @@ class InstallationWorker(QThread):
         self.source_dir = source_dir
         self.destination_dir = destination_dir
 
+        self.do_download = self.install_type == "download"
+        self.do_copy = self.do_download
+
     def run(self):
-        # Download - type "download"
-        self.log_update.emit("Downloading", "yellow")
-        time.sleep(.5)
-        self.log_update.emit(".........", "default")
-        time.sleep(.5)
-        self.log_update.emit("Done\n", "green")
+        temp_dir = None
+        if self.do_download:
+            temp_dir = tempfile.TemporaryDirectory()
+            zip_file = Path(temp_dir.name) / "sourcefile.zip"
+            source_dir = Path(temp_dir.name) / "sourcedir"
 
-        # Unzip - type "download"
-        self.log_update.emit("Unzipping", "yellow")
-        time.sleep(.5)
-        self.log_update.emit(".........", "default")
-        time.sleep(.5)
-        self.log_update.emit("Done\n", "green")
+            self.log_update.emit("Downloading", "yellow")
+            self.download_file(self.dl_url, zip_file)
+            self.log_update.emit("Done\n", "green")
 
-        # Copy Files - type "download", "copy"
-        self.log_update.emit("Copying Files", "yellow")
-        time.sleep(.5)
-        self.log_update.emit(".........", "default")
-        time.sleep(.5)
-        self.log_update.emit("Done\n", "green")
+            self.log_update.emit("Unzipping", "yellow")
+            self.log_update.emit("..", "default")
+            with zipfile.ZipFile(zip_file, 'r') as zipf:
+                zipf.extractall(source_dir)
+            self.log_update.emit("Done\n", "green")
 
-        # Create Package File - new_install
-        self.log_update.emit("Creating Package File", "yellow")
-        time.sleep(.5)
-        self.log_update.emit(".........", "default")
-        time.sleep(.5)
-        self.log_update.emit("Done\n", "green")
+            # Set the source_dir to the directory inside the unzipped directory
+            unzipped_dir = None
+            for item in source_dir.iterdir():
+                unzipped_dir = item
+            if unzipped_dir:
+                source_dir = unzipped_dir
 
-        # Cleanup - type "download"
-        self.log_update.emit("Cleaning Up", "yellow")
-        time.sleep(.5)
-        self.log_update.emit(".........", "default")
-        time.sleep(.5)
-        self.log_update.emit("Done\n", "green")
+        if self.do_copy:
+            self.log_update.emit("Copying Files", "yellow")
+            files = list(source_dir.rglob("*"))
+            for file in files:
+                dest_path = self.destination_dir / file.relative_to(source_dir)
+                if file.is_dir():
+                    dest_path.mkdir(parents=True, exist_ok=True)
+                else:
+                    shutil.copy2(file, dest_path)
+                    self.log_update.emit(".", "default")
+            self.log_update.emit("Done\n", "green")
+
+        if self.new_install:
+            self.log_update.emit("Creating Package File", "yellow")
+            self.log_update.emit(".........", "default")
+            self.log_update.emit("Done\n", "green")
+
+        if self.do_download:
+            self.log_update.emit("Cleaning Up Temp Files", "yellow")
+            self.log_update.emit("..", "default")
+            if temp_dir:
+                temp_dir.cleanup()
+                self.log_update.emit("..", "default")
+            self.log_update.emit("Done\n", "green")
 
         self.log_update.emit("\nRelaunch Houdini for changes to take effect.\n", "cyan")
 
         self.completed.emit()
 
+    def download_file(self, url: str, dest_path: Path):
+        """
+        Download a file with in-progress updates.
+        Args:
+            url:
+            dest_path:
+        """
+        response = requests.get(url, stream=True)
+        total_size = int(response.headers.get("content-length", 0))
+        chunk_size = 1024*100
+        downloaded = 0
+
+        with dest_path.open("wb") as file:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                if chunk:
+                    file.write(chunk)
+                    downloaded += len(chunk)
+                    # percent_done = (downloaded / total_size) * 100
+                    self.log_update.emit(".", "default")
 
 class InstallDialog(QDialog):
 
@@ -184,15 +217,15 @@ class InstallDialog(QDialog):
         self.install_exists = False
         htg_basedir = os.environ.get("HTG_BASEDIR")
         try:
-            htg_path = Path(htg_basedir)
+            self.htg_path = Path(htg_basedir)
         except TypeError:
-            htg_path = None
+            self.htg_path = None
 
-        if htg_path and htg_path.is_dir():
+        if self.htg_path and self.htg_path.is_dir():
             self.install_exists = True
 
         if self.ran_from_cmd and self.install_exists:
-            if htg_path == self.cmd_path:
+            if self.htg_path == self.cmd_path:
                 self.start_page = "AlreadyInstalled"
             else:
                 self.start_page = "ManualUpdate"
@@ -221,6 +254,8 @@ class InstallDialog(QDialog):
         self.done_button = None
         self.worker = None
 
+        # The pages list is used to keep track of the stack index,
+        # so we can look up the page by name instead of index.
         self.pages = []
         self.stack = QStackedWidget(self)
         self.pages.append("ManualUpdate")
@@ -235,6 +270,7 @@ class InstallDialog(QDialog):
         self.pages.append("Update")
         self.init_update_page()
 
+        # The Installation Page is the only page that should not be a start page.
         self.pages.append("Installation")
         self.init_installation_page()
 
@@ -405,7 +441,6 @@ class InstallDialog(QDialog):
 
         self.branch_combo.currentIndexChanged.connect(self.branch_updated)
         self.release_combo.currentIndexChanged.connect(self.branch_updated)
-
         branch_layout.addWidget(branch_label)
         branch_layout.addWidget(self.branch_combo)
         branch_layout.addWidget(self.release_combo)
@@ -498,15 +533,18 @@ class InstallDialog(QDialog):
         new_version = self.release_combo.currentText()
         if branch_value == "Current Release":
             new_version = get_releases()[0]["name"]
+
         self.version_label.setText(version_text(branch=branch, new_version=new_version))
 
     # Installation Functions
-    def start_installation(self, install_type: str = ""):
+    def start_installation(self,
+                           install_type: str = "",
+                           dl_url: str | None = None,
+                           source_dir: Path | None = None,
+                           destination_dir: Path | None = None):
+
         self.stack.setCurrentIndex(self.pages.index("Installation"))
         new_install=False
-        dl_url = ""
-        source_dir = ""
-        destination_dir = ""
 
         self.worker = InstallationWorker(
             install_type=install_type,
@@ -525,7 +563,25 @@ class InstallDialog(QDialog):
 
     def start_installation_from_update(self):
         # Gather Data
-        self.start_installation()
+        branch = self.branch_combo.currentText()
+        if branch == "Current Release":
+            dl_url = hou.session.htg_releases[0]["zipball_url"]
+        elif branch == "Older Release":
+            dl_url = hou.session.htg_releases[self.release_combo.currentIndex()]["zipball_url"]
+        else:
+            repo_url = os.environ.get("HTG_REPO_URL")
+            dl_url = f"{repo_url}/archive/refs/heads/{branch}.zip"
+
+        destination_dir = self.htg_path
+        # TODO: Remove temporary directory override.
+        destination_dir = Path("D:/Users/Jeff/Documents/Temp/Foo")
+        destination_dir.mkdir(parents=True, exist_ok=True)
+
+        self.start_installation(
+            install_type="download",
+            dl_url=dl_url,
+            destination_dir=destination_dir
+        )
 
     def start_installation_from_manual_update(self):
         # Gather Data
