@@ -1,0 +1,30 @@
+= TaleSpire Heightfield Flatten Region =
+
+"""Flattens regions in isolated masked areas."""
+=== Overview ===
+Uses the incoming mask to flatten the area within. Fully masked areas, close to 1.0 in value,
+are used to calculate the height of the region, blending into the less masked areas.
+Each isolated masked region calculates its own height.
+
+@parameters
+== General ==
+Flattening Mode:
+    #id: flatten_mode
+
+    The mode used to determine what height the flattened region should be at.
+
+    Highest Point:
+        The height is set to the highest point within the region.
+
+    Lowest Point:
+        The height is set to the lowest point within the region.
+        Good for Water areas.
+
+    Average:
+        The average of the sum of the entire region.
+
+    Most Common:
+        Height set to the most common height found in the region.
+
+    Median:
+        The middle of the highest and lowest point.

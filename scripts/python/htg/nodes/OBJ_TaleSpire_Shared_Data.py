@@ -52,9 +52,9 @@ def build_ts_database(node):
         for atlas_entry in index_dict['IconsAtlases']:
             icon_atlases.append(atlas_entry['Path'])
 
-        for type in index_dict:
-            if type in ['Tiles', 'Props']:
-                for asset_dict in index_dict[type]:
+        for asset_type in index_dict:
+            if asset_type in ['Tiles', 'Props']:
+                for asset_dict in index_dict[asset_type]:
                     uuid = asset_dict['Id'].lower()
                     if uuid not in seen_ids:
                         seen_ids.append(uuid)
@@ -73,23 +73,23 @@ def build_ts_database(node):
                         elif '2x1' in asset_tags:
                             tag_name = '2x1'
 
-                        if '2x2' not in asset_name and '1x1' not in asset_name and type == 'Tiles':
+                        if '2x2' not in asset_name and '1x1' not in asset_name and asset_type == 'Tiles':
                             asset_name += f' {tag_name}'
 
                         point.setAttribValue('Name', asset_name)
-                        point.setAttribValue('Type', type)
+                        point.setAttribValue('Type', asset_type)
                         point.setAttribValue('IsDeprecated', asset_dict['IsDeprecated'])
                         point.setAttribValue('GroupTag', asset_dict['GroupTag'])
                         point.setAttribValue('Tags', asset_tags)
                         point.setAttribValue('Folder', asset_dict['Folder'])
 
-                        m_Center = asset_dict['ColliderBoundsBound']['m_Center']
-                        m_Extent = asset_dict['ColliderBoundsBound']['m_Extent']
+                        m_center = asset_dict['ColliderBoundsBound']['m_Center']
+                        m_extent = asset_dict['ColliderBoundsBound']['m_Extent']
 
-                        point.setAttribValue('m_Center', hou.Vector3([m_Center['x'], m_Center['y'], m_Center['z']]))
-                        point.setAttribValue('m_Extent', hou.Vector3([m_Extent['x'], m_Extent['y'], m_Extent['z']]))
+                        point.setAttribValue('m_Center', hou.Vector3([m_center['x'], m_center['y'], m_center['z']]))
+                        point.setAttribValue('m_Extent', hou.Vector3([m_extent['x'], m_extent['y'], m_extent['z']]))
 
-                        extent = (m_Extent['x'], m_Extent['y'], m_Extent['z'])
+                        extent = (m_extent['x'], m_extent['y'], m_extent['z'])
                         if extent in ((1.0, 0.25, 1.0), (0.5, 0.25, 0.5)):
                             is_floor = True
                         else:
@@ -140,7 +140,7 @@ def process_images(node=None, geo=None, process_type='textures', force_all=False
     for point in geo.points():
         icon_atlas = point.attribValue('IconAtlas')
         icon_region = point.attribValue('IconRegion')
-        output_path = point.attribValue('texture_path').replace('textures', process_type)
+        output_path = point.attribValue('texture_path').replace("cache/textures/", f"cache/{process_type}/")
         is_floor = point.attribValue('is_floor')
         uuid = point.attribValue('Id')
 

@@ -3,6 +3,7 @@ import base64
 import hou
 import json
 import talespire.decode as ts_decode
+import htg.nodes.common as ts_common
 
 
 def lock_collider(parm=None, cook=False):
@@ -46,6 +47,75 @@ def recook_material(node=None):
         mat_node.cook(force=True)
     except hou.OperationFailed:
         pass
+
+
+def asset_uuid_selected(node=None):
+    """Run when the UUID is changed."""
+    recook_material(node)
+
+
+def get_uuid_dict():
+    try:
+        return hou.session.htg_uuid_dict
+    except AttributeError:
+        uuid_dict = {}
+
+    ts_database_node = ts_common.get_ts_database_node()
+    geo = ts_database_node.geometry()
+    for point in geo.points():
+        uuid = point.attribValue("Id")
+        name = point.attribValue("Name")
+        texture_path = point.attribValue("texture_path")
+        uuid_dict[uuid] = {"name": name, "texture_path": texture_path}
+
+    hou.session.htg_uuid_dict = uuid_dict
+    return uuid_dict
+
+
+def get_uuid_asset_db(node=None):
+    try:
+        asset_db = hou.session.htg_uuid_asset_db
+    except AttributeError:
+        asset_db = {}
+        hou.session.htg_uuid_asset_db = {}
+
+    asset_type = node.parm("obj_type").eval()
+    folder = node.parm("ts_asset_folder").eval()
+    deprecated = "_deprecated"  if node.parm("ts_allow_depricated").eval() == 1 else ""
+
+    db_name = f"{asset_type}_{folder}{deprecated}"
+
+    try:
+        return asset_db[db_name]
+    except KeyError:
+        pass
+
+    ts_database_node = hou.node(node.path()+"/DATA/OBJ_TYPE")
+    data_geo = ts_database_node.geometry()
+
+    items_dict = {}
+    for point in data_geo.points():
+        asset_name = point.attribValue("Name")
+        uuid = point.attribValue("Id")
+        items_dict[f"{asset_name.lower()} - {uuid}"] = [uuid, asset_name]
+
+    items_list = list(items_dict.keys())
+    items_list.sort()
+
+    uuids = []
+    menu_list = []
+
+    for asset_name in items_list:
+        menu_list += items_dict[asset_name]
+        uuids.append(items_dict[asset_name][0])
+
+    asset_db[db_name] = {
+        "uuids": uuids,
+        "menu_list": menu_list
+    }
+
+    hou.session.htg_uuid_asset_db = asset_db
+    return asset_db[db_name]
 
 
 def decode_slab(node=None):
