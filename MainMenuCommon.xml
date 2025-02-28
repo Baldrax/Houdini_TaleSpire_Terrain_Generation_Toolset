@@ -5,9 +5,69 @@
           <label>TaleSpire</label>
 
           <scriptItem>
+              <label>Github Page</label>
+              <scriptPath>$HTG_BASEDIR/scripts/python/htg/launch_webpage.py</scriptPath>
+              <scriptArgs>github</scriptArgs>
+          </scriptItem>
+
+          <scriptItem>
+              <label>Wiki Page</label>
+              <scriptPath>$HTG_BASEDIR/scripts/python/htg/launch_webpage.py</scriptPath>
+              <scriptArgs>wiki</scriptArgs>
+          </scriptItem>
+
+          <separatorItem/>
+
+          <scriptItem>
+              <label>Join Discord</label>
+              <scriptPath>$HTG_BASEDIR/scripts/python/htg/launch_webpage.py</scriptPath>
+              <scriptArgs>discord</scriptArgs>
+          </scriptItem>
+
+          <separatorItem/>
+
+          <subMenu id="htg_examplesmenu">
+              <label>Example Files</label>
+              <scriptItem>
+                  <label>Biomes</label>
+                  <scriptPath>$HTG_BASEDIR/scripts/python/htg/launch_example.py</scriptPath>
+                  <scriptArgs>biomes.hipnc</scriptArgs>
+              </scriptItem>
+
+              <scriptItem>
+                  <label>Geometric Shapes</label>
+                  <scriptPath>$HTG_BASEDIR/scripts/python/htg/launch_example.py</scriptPath>
+                  <scriptArgs>geometric_shape_examples.hipnc</scriptArgs>
+              </scriptItem>
+
+              <scriptItem>
+                  <label>Water Tiles</label>
+                  <scriptPath>$HTG_BASEDIR/scripts/python/htg/launch_example.py</scriptPath>
+                  <scriptArgs>water_tile_examples.hipnc</scriptArgs>
+              </scriptItem>
+
+              <separatorItem/>
+
+              <scriptItem>
+                  <label>Forest Gully</label>
+                  <scriptPath>$HTG_BASEDIR/scripts/python/htg/launch_example.py</scriptPath>
+                  <scriptArgs>example_Forest_Gully.hipnc</scriptArgs>
+              </scriptItem>
+
+              <scriptItem>
+                  <label>Zen Garden</label>
+                  <scriptPath>$HTG_BASEDIR/scripts/python/htg/launch_example.py</scriptPath>
+                  <scriptArgs>example_Zen_Garden.hipnc</scriptArgs>
+              </scriptItem>
+          </subMenu>
+
+          <separatorItem/>
+
+          <scriptItem>
               <label>Check for Updates</label>
               <scriptPath>$HTG_BASEDIR/scripts/python/htg/install_update.py</scriptPath>
           </scriptItem>
+
       </subMenu>
   </menuBar>
 </mainMenu>
