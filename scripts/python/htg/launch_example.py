@@ -1,15 +1,16 @@
 """Launches an example file in a new Houdini window."""
 import os
+import platform
 import subprocess
 import sys
 
 from pathlib import Path
 
 
-houdini_bin = Path(os.environ.get("HB"))
-houdini_exe = houdini_bin / "houdini.exe"
+houdini_bin = Path(os.environ.get("HB", ""))
+houdini_exe = houdini_bin / "houdini.exe" if platform.system() == "Windows" else "houdini"
 
-examples_dir = Path(os.environ.get("HTG_BASEDIR")) / "hip" / "examples"
+examples_dir = Path(os.environ.get("HTG_BASEDIR", "")) / "hip" / "examples"
 hip_file = examples_dir / sys.argv[1]
 
 subprocess.Popen(f"{houdini_exe} {hip_file}", shell=True)
