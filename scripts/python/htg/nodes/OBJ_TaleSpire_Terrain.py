@@ -123,6 +123,11 @@ def cook_the_things(node=None):
                 pass
 
 
+def edit_subnetwork(node=None, subnet=None):
+    dest_node = hou.node(f'{node.path()}/{subnet}')
+    htg.utils.set_network(node, dest_node)
+
+
 def edit_terrain(node=None):
     dest_node = hou.node(node.path() + '/terrain_edit')
     htg.utils.set_network(node, dest_node)
