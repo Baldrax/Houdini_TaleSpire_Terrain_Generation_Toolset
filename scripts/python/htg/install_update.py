@@ -17,12 +17,23 @@ from pathlib import Path
 
 import hou
 
-from PySide2.QtWidgets import (
-    QPushButton, QDialog, QStackedWidget, QVBoxLayout, QLabel, QLineEdit, QHBoxLayout, QCheckBox,
-    QComboBox, QSizePolicy, QTextEdit
-)
-from PySide2.QtCore import Qt, QThread, Signal
-from PySide2.QtGui import QTextCursor, QTextCharFormat, QColor
+# As of Houdini 21.0 Sidefx switched to PySide6, we'll attempt to support PySide2 as well.
+try:
+    from PySide6.QtWidgets import (
+        QPushButton, QDialog, QStackedWidget, QVBoxLayout, QLabel, QLineEdit, QHBoxLayout, QCheckBox,
+        QComboBox, QSizePolicy, QTextEdit
+    )
+    from PySide6.QtCore import Qt, QThread, Signal
+    from PySide6.QtGui import QTextCursor, QTextCharFormat, QColor
+    PYSIDE_VERSION = 6
+except ImportError:
+    from PySide2.QtWidgets import (
+        QPushButton, QDialog, QStackedWidget, QVBoxLayout, QLabel, QLineEdit, QHBoxLayout, QCheckBox,
+        QComboBox, QSizePolicy, QTextEdit
+    )
+    from PySide2.QtCore import Qt, QThread, Signal
+    from PySide2.QtGui import QTextCursor, QTextCharFormat, QColor
+    PYSIDE_VERSION = 2
 
 REPO_NAME = "Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset"
 
@@ -41,7 +52,7 @@ DONE = "green"
 INFO = "cyan"
 WARN = "red"
 
-def make_package_file(htg_dir: str | None = None):
+def make_package_file(htg_dir: Path | None = None):
     user_pref_dir = os.environ.get("HOUDINI_USER_PREF_DIR")
     package_filename = f"{user_pref_dir}/packages/HTTGT.json"
     package_file = Path(package_filename)
@@ -73,6 +84,8 @@ def get_branches() -> list:
                 branch_list.append(branch["name"])
             hou.session.htg_branches = branch_list
             return branch_list
+        else:
+            return []
 
 
 def get_releases() -> list:
