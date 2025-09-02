@@ -13,4 +13,4 @@ houdini_exe = houdini_bin / "houdini.exe" if platform.system() == "Windows" else
 examples_dir = Path(os.environ.get("HTG_BASEDIR", "")) / "hip" / "examples"
 hip_file = examples_dir / sys.argv[1]
 
-subprocess.Popen(f"{houdini_exe} {hip_file}", shell=True)
+subprocess.Popen(f'"{houdini_exe}" "{hip_file}"', shell=True)
