@@ -6,6 +6,9 @@
       },
       {
         "HTG_REPO_NAME": "Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset"
+      },
+      {
+        "HOUDINI_UI_QUEUE_SIZE": 300000
       }
     ]
 }
