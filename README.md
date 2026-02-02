@@ -47,8 +47,7 @@ To install and use the mods visit the wiki page:
 
 ## Contact
 Join us on Discord to discuss the toolset, share work and inspiration and to get the latest news.
-
-https://discord.gg/Wx54CAtz4H
+- [Join Discord](https://discord.gg/vccbMYC4qb)
 
 ### Attributions
 The TaleSpire Slab Encoding/Decoding code was originally authored by LuPro 
