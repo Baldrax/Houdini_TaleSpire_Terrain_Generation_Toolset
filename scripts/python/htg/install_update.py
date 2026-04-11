@@ -105,7 +105,7 @@ def get_releases() -> list:
 
 
 def get_current_version() -> str:
-    from version import version as current_version
+    from htg.version import version as current_version
     return current_version
 
 
