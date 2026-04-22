@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 import requests
 import shutil
 import sys
+import subprocess
 import tempfile
 import warnings
 import zipfile
@@ -38,9 +40,9 @@ except ImportError:
 REPO_NAME = "Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset"
 
 # Options for Development and Debugging
-DEBUG = False
+DEBUG = True
 START_PAGE = None
-INSTALL_EXISTS = False
+INSTALL_EXISTS = True
 REPORT_ONLY = True
 
 # Log Colors
@@ -149,6 +151,7 @@ class InstallationWorker(QThread):
         self.dl_url = dl_url
         self.source_dir = source_dir
         self.destination_dir = destination_dir
+        self.install_external_packages = True
 
         self.do_download = self.install_type == "download"
         self.do_copy = self.do_download or self.install_type == "copy"
@@ -239,6 +242,9 @@ class InstallationWorker(QThread):
                 self.log_update.emit("..", DOTS)
             self.log_update.emit(" Done\n\n", DONE)
 
+        if self.install_external_packages:
+            self.install_external_packages()
+
         self.log_update.emit("Relaunch Houdini for changes to take effect.\n", INFO)
 
         self.completed.emit()
@@ -262,6 +268,27 @@ class InstallationWorker(QThread):
                     downloaded += len(chunk)
                     # percent_done = (downloaded / total_size) * 100
                     self.log_update.emit(".", DOTS)
+
+    def install_external_packages(self):
+        lib_path = Path(hou.expandString("$HTG_BASEDIR")) / "python_libs"
+        houdini_bin = Path(os.environ.get("HB", ""))
+        hython_path = houdini_bin / "hython.exe" if platform.system() == "Windows" else "hython"
+
+        cmd = [
+            str(hython_path),
+            "-m", "pip", "install", "--disable-pip-version-check", "--no-input", "--upgrade", "--target", str(lib_path),
+            "talespire-encdoding @ git+https://github.com/Baldrax/TaleSpire-Encoding-Python.git@v1.1.1",
+        ]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+
+        for line in proc.stdout:
+            self.log_update.emit(line.strip(), STEP)
+
+        return_code = proc.wait()
+
+
+
+
 
 class InstallDialog(QDialog):
 
