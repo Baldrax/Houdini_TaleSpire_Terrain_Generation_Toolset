@@ -5,6 +5,9 @@
 .idea
 venv/
 
+#ignore python_libs
+python_libs/
+
 #ignore backup folders
 **/backup/
 
