@@ -11,6 +11,8 @@ import tempfile
 import warnings
 import zipfile
 
+from htg.utils import check_external_packages
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 # TODO: distutils is deprecated and will likely not be available in python 3.13, will
 #       need to find an alternative version comparison without installing python modules.
@@ -145,7 +147,7 @@ class InstallationWorker(QThread):
             destination_dir: Path | None = None
     ):
         super().__init__()
-        # type: "download", "copy", "in-place"
+        # type: "download", "copy", "in-place", "install_packages"
         self.install_type = install_type
         self.new_install = new_install
         self.dl_url = dl_url
@@ -243,7 +245,7 @@ class InstallationWorker(QThread):
                 self.log_update.emit("..", DOTS)
             self.log_update.emit(" Done\n\n", DONE)
 
-        if self.do_install_external_packages:
+        if self.do_install_external_packages or self.install_type == "install_packages":
             self.install_external_packages()
 
         self.log_update.emit("Relaunch Houdini for changes to take effect.\n", INFO)
@@ -275,47 +277,38 @@ class InstallationWorker(QThread):
         is_update = False
         self.log_update.emit("Checking External Package Versions ", STEP)
         self.log_update.emit("..", DOTS)
-        try:
-            import ts_encoding
-            if ts_encoding.__version__ != "1.1.1":
-                do_install = True
-                is_update = True
-        except ModuleNotFoundError:
-            do_install = True
+        package_list = check_external_packages(force=True)
         self.log_update.emit(" Done\n\n", DONE)
 
-        if do_install:
-            self.log_update.emit("Installing External Packages\n", STEP)
+        if len(package_list) > 0:
             lib_path = Path(hou.expandString("$HTG_BASEDIR")) / "python_libs"
             houdini_bin = Path(os.environ.get("HB", ""))
             hython_path = houdini_bin / "hython.exe" if platform.system() == "Windows" else "hython"
 
-            cmd = [
-                str(hython_path),
-                "-m", "pip", "install", "--disable-pip-version-check", "--no-input", "--upgrade", "--target", str(lib_path),
-                "talespire-encoding @ git+https://github.com/Baldrax/TaleSpire-Encoding-Python.git@v1.1.1",
-            ]
-            proc = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                text=True, bufsize=1, creationflags=subprocess.CREATE_NO_WINDOW
-            )
+            for package_dict in package_list:
+                self.log_update.emit(f"Installing {package_dict['package_name']}\n", STEP)
+                cmd = [
+                    str(hython_path),
+                    "-m", "pip", "install", "--disable-pip-version-check", "--no-input", "--upgrade", "--target", str(lib_path),
+                    f"{package_dict['package_name']} @ {package_dict['repo']}@v{package_dict['version']}",
+                ]
+                proc = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                    text=True, bufsize=1, creationflags=subprocess.CREATE_NO_WINDOW
+                )
 
-            for line in proc.stdout:
-                self.log_update.emit(line, DATA)
+                for line in proc.stdout:
+                    self.log_update.emit(line, DATA)
 
-            return_code = proc.wait()
-            self.log_update.emit("\nDone installing packages\n", STEP)
-
-
-
-
+                return_code = proc.wait()
+                self.log_update.emit(f"Done installing {package_dict['package_name']}\n\n", STEP)
 
 
 class InstallDialog(QDialog):
 
     LABEL_WIDTH = 50
 
-    def __init__(self, cmd_path: str | None = None):
+    def __init__(self, cmd_path: str | None = None, install_packages: bool = False):
         parent = hou.qt.mainWindow()
         super().__init__(parent, Qt.Window)
         self.setWindowTitle("HTG Toolset Install/Update")
@@ -347,6 +340,8 @@ class InstallDialog(QDialog):
                 self.start_page = "ManualUpdate"
         elif self.ran_from_cmd:
             self.start_page = "NewInstall"
+        elif install_packages:
+            self.start_page = "Installation"
         else:
             self.start_page = "Update"
 
@@ -401,6 +396,10 @@ class InstallDialog(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(self.stack)
         self.setLayout(layout)
+
+        if install_packages:
+            self.start_installation(install_type="install_packages")
+
 
     def init_new_install_page(self):
         # Base page layout
@@ -754,7 +753,7 @@ class InstallDialog(QDialog):
         cursor.insertText(text)
 
 
-def show(cmd_path: str | None = None):
+def show(cmd_arg: str | None = None):
     # If the dialog already exists in hou.session close it before opening another one.
     if hasattr(hou.session, "install_dialog") and hou.session.install_dialog is not None:
         try:
@@ -762,7 +761,10 @@ def show(cmd_path: str | None = None):
         except:
             pass
 
-    dialog = InstallDialog(cmd_path=cmd_path)
+    if cmd_arg == "update_packages":
+        dialog = InstallDialog(install_packages=True)
+    else:
+        dialog = InstallDialog(cmd_path=cmd_arg)
     hou.session.install_dialog = dialog
     dialog.show()
 
@@ -778,7 +780,7 @@ if open_dialog:
 # This runs if executed from the Run command in Houdini or from the command line.
 if __name__ == "__main__":
     try:
-        cmd_base_dir = sys.argv[1]
-        show(cmd_path=cmd_base_dir)
+        cmd_arg = sys.argv[1]
+        show(cmd_arg=cmd_arg)
     except IndexError:
         show()
