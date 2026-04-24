@@ -75,12 +75,19 @@ def check_external_packages(ui_warning=False, force=False):
             }
         )
 
-    if ui_warning:
+    if ui_warning and add_package:
         msg = ("Warning! Necessary external packages are missing or are the wrong version.\n"
                "The toolset will not work properly without these.\n"
                "Launch the Installer to fix the issue.")
 
-        result = hou.ui.displayMessage(msg, buttons=("Launch Installer", "Cancel"), severity=hou.severityType.Warning)
+        details = f"Current Version: {current_version}\nRequired Version: {package_version}"
+
+        result = hou.ui.displayMessage(
+            msg,
+            buttons=("Launch Installer", "Cancel"),
+            severity=hou.severityType.Warning,
+            details=details
+        )
         if result == 0:
             hou.hscript("python $HTG_BASEDIR/scripts/python/htg/install_update.py update_packages")
 
