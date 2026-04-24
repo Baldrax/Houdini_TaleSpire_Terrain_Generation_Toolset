@@ -1,9 +1,14 @@
-import struct
-import base64
 import hou
 import json
-import talespire.decode as ts_decode
+
+import ts_encoding
+from ts_encoding.slab import TSSlab
+
 import htg.nodes.common as ts_common
+
+from importlib import reload
+reload(ts_encoding)
+reload(ts_encoding.slab)
 
 
 def lock_collider(parm=None, cook=False):
@@ -122,13 +127,15 @@ def decode_slab(node=None):
     data = node.parm('ts_slab_str').eval()
     node.parm('ts_slab_str').set(data.strip('`'))
     try:
-        asset_data_list = ts_decode.decode(data)
-    except (struct.error, base64.binascii.Error):
+        slab = TSSlab()
+        slab.decode_slab(data)
+        slab_data = slab.data
+    except ts_encoding.BadSlabCode:
         hou.ui.displayMessage('Not a valid TaleSpire Slab')
-        asset_data_list = None
+        slab_data = None
 
-    if asset_data_list:
-        node.setUserData('ts_slab', json.dumps(asset_data_list))
+    if slab_data:
+        node.setUserData('ts_slab', json.dumps(slab_data))
     else:
         node.clearUserDataDict()
 
@@ -153,35 +160,40 @@ def generate_slab_points(node=None):
 
     geo = node.geometry()
     geo.addAttrib(hou.attribType.Point, 'uuid', '')
-    geo.addAttrib(hou.attribType.Point, 'degree', 0)
-    geo.addAttrib(hou.attribType.Point, 'ts_x', 0)
-    geo.addAttrib(hou.attribType.Point, 'ts_y', 0)
-    geo.addAttrib(hou.attribType.Point, 'ts_z', 0)
+    geo.addAttrib(hou.attribType.Point, 'degree', 0.0)
+    geo.addAttrib(hou.attribType.Point, 'ts_x', 0.0)
+    geo.addAttrib(hou.attribType.Point, 'ts_y', 0.0)
+    geo.addAttrib(hou.attribType.Point, 'ts_z', 0.0)
 
     num_replaces = top_node.parm('asset_replace').eval()
     replace_dict = {}
     for i in range(1, num_replaces + 1):
-        # hou.ui.displayMessage(i)
         from_uuid = top_node.parm('from_uuid_{}'.format(i)).eval()
         to_uuid = top_node.parm('to_uuid_{}'.format(i)).eval()
         replace_dict[from_uuid] = to_uuid
 
     if top_node.parm('obj_type').eval() == 'slab':
-        try:
-            data = json.loads(top_node.userData('ts_slab'))['asset_data']
-        except TypeError:
+        user_data = json.loads(top_node.userData('ts_slab'))
+        if user_data and 'layouts' not in user_data:
+            # If the slab was decoded using the older decoder, we have to re-decode it.
+            decode_slab(top_node)
+            user_data = json.loads(top_node.userData('ts_slab'))
+
+        if user_data:
+            data = user_data['layouts']
+        else:
             data = {}
 
         for asset_data in data:
             uuid = asset_data['uuid'].lower()
             for instance in asset_data['instances']:
                 point = geo.createPoint()
-                tx = instance['x']
-                ty = instance['y']
-                tz = instance['z']
-                degree = instance['degree']
+                tx = instance['pos_x']
+                ty = instance['pos_y']
+                tz = instance['pos_z']
+                degree = instance['degrees']
 
-                point.setPosition((float(tx) * .01, float(tz) * .01, -float(ty) * .01))
+                point.setPosition((float(tx), float(ty), -float(tz)))
                 point.setAttribValue('degree', degree)
                 point.setAttribValue('uuid', uuid_replace(uuid, replace_dict))
                 point.setAttribValue('ts_x', tx)
@@ -189,5 +201,5 @@ def generate_slab_points(node=None):
                 point.setAttribValue('ts_z', tz)
     else:
         point = geo.createPoint()
-        point.setAttribValue('degree', 0)
+        point.setAttribValue('degree', 0.0)
         point.setAttribValue('uuid', top_node.parm('ts_asset_uuid').eval())
