@@ -286,7 +286,17 @@ class InstallationWorker(QThread):
             hython_path = houdini_bin / "hython.exe" if platform.system() == "Windows" else "hython"
 
             for package_dict in package_list:
-                self.log_update.emit(f"Installing {package_dict['package_name']}\n", STEP)
+                self.log_update.emit(f"Removing old {package_dict['package_name']} ", STEP)
+                self.log_update.emit("..", DOTS)
+                rm_paths = list(lib_path.glob(f"{package_dict['package_name'].replace('-', '_')}-*.dist-info"))
+                rm_paths.append(lib_path / package_dict["package"])
+                for rm_path in rm_paths:
+                    if rm_path.is_dir():
+                        shutil.rmtree(rm_path)
+                        self.log_update.emit("..", DOTS)
+                self.log_update.emit(" Done\n\n", DONE)
+
+                self.log_update.emit(f"Installing {package_dict['package_name']} - DO NOT CLOSE DIALOG\n", STEP)
                 cmd = [
                     str(hython_path),
                     "-m", "pip", "install", "--disable-pip-version-check", "--ignore-requires-python",
