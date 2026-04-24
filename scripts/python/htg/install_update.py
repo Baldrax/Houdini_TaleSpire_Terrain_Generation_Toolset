@@ -289,7 +289,8 @@ class InstallationWorker(QThread):
                 self.log_update.emit(f"Installing {package_dict['package_name']}\n", STEP)
                 cmd = [
                     str(hython_path),
-                    "-m", "pip", "install", "--disable-pip-version-check", "--no-input", "--upgrade", "--target", str(lib_path),
+                    "-m", "pip", "install", "--disable-pip-version-check", "--ignore-requires-python",
+                    "--no-input", "--upgrade", "--target", str(lib_path),
                     f"{package_dict['package_name']} @ {package_dict['repo']}@v{package_dict['version']}",
                 ]
                 proc = subprocess.Popen(
