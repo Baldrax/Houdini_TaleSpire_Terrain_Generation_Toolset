@@ -277,7 +277,9 @@ class InstallationWorker(QThread):
         is_update = False
         self.log_update.emit("Checking External Package Versions ", STEP)
         self.log_update.emit("..", DOTS)
-        package_list = check_external_packages()
+
+        # Even though the package_list is likely cached read it again (force) in case the new version has changes.
+        package_list = check_external_packages(force=True)
         self.log_update.emit(" Done\n\n", DONE)
 
         if len(package_list) > 0:
