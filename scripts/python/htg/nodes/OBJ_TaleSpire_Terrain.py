@@ -5,6 +5,7 @@ import htg.utils
 import htg.configs as ts_configs
 import htg.nodes.common as ts_common
 import htg.nodes.SOP_TaleSpire_Export as ts_export
+from ts_encoding.slab import TSSlab
 
 
 def read_configs(node=None):
@@ -174,6 +175,7 @@ def write_terrain_tiles(node=None):
         read_node.parm('reload').pressButton()
         cook_biome_data_node(node)
 
+
 def cook_biome_data_node(node=None):
     biome_data_node = hou.node(node.path() + '/DATA/Biome_info')
     try:
@@ -197,9 +199,8 @@ def cache_uuids(node):
 
 
 def copy_slab(node=None):
-    json_data = get_js(node)
-    slab = ts_export.encode_slab(json_data)
-    htg.utils.copy_to_clipboard(slab.strip("b'`"))
+    slab = prep_slab(node)
+    htg.utils.copy_to_clipboard(ts_export.encode_slab(slab))
 
 
 def copy_slab_and_advance(node=None):
@@ -282,13 +283,11 @@ def get_slab_with_pos(node=None):
     point = geo.point(0)
     try:
         pos = tuple(point.position())
-        json_data = get_js(node)
-
-        slab = ts_export.encode_slab(json_data)
+        slab = prep_slab(node)
 
         out = {
             "position": {"x": pos[0], "y": pos[1], "z": -pos[2]},
-            "code": slab.strip("b'`")
+            "code": ts_export.encode_slab(slab)
         }
     except AttributeError:
         out = None
@@ -296,9 +295,10 @@ def get_slab_with_pos(node=None):
     return out
 
 
-def get_js(node=None):
+def prep_slab(node=None):
     geonode = get_out_node(node)
     geo = geonode.geometry()
+
     uuid_data = {}
     for point in geo.points():
         uuid = point.attribValue('ts_uuid')
@@ -308,19 +308,20 @@ def get_js(node=None):
         degree = point.attribValue('ts_degree')
         if uuid not in uuid_data:
             uuid_data[uuid] = []
-        uuid_data[uuid].append({'x': x, 'y': y, 'z': z, 'degree': degree})
+        uuid_data[uuid].append({'pos_x': x, 'pos_y': y, 'pos_z': z, 'degrees': degree})
 
-    data = {'unique_asset_count': len(uuid_data.keys()), 'asset_data': []}
-    for auuid in uuid_data.keys():
-        asset_data = {
-            'uuid': auuid,
-            'instance_count': len(uuid_data[auuid]),
-            'instances': uuid_data[auuid]
+    slab = TSSlab()
+    slab.data["layout_count"] = len(uuid_data.keys())
+    for asset_uuid in uuid_data.keys():
+        asset_layout = {
+            'uuid': asset_uuid,
+            'reserved': 0,
+            'instance_count': len(uuid_data[asset_uuid]),
+            'instances': uuid_data[asset_uuid]
         }
-        data['asset_data'].append(asset_data)
+        slab.data["layouts"].append(asset_layout)
 
-    json_dump = json.dumps(data)
-    return data
+    return slab
 
 
 # TODO: Not sure what this was for, might not be needed.

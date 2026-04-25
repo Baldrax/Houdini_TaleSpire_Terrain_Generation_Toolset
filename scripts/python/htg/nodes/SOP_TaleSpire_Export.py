@@ -3,10 +3,10 @@
 import json
 import sys
 import htg.utils
-import talespire.encode as ts_encode
 import hou
 
-from talespire.exceptions import *
+from ts_encoding.slab import TSSlab
+from ts_encoding import SlabExceedsSizeLimit
 
 
 def slab_too_large():
@@ -18,9 +18,9 @@ def slab_too_large():
     sys.exit(1)
 
 
-def encode_slab(json_data):
+def encode_slab(slab_obj: TSSlab):
     try:
-        slab = ts_encode.encode(json_data)
+        slab = slab_obj.encode_slab()
     except SlabExceedsSizeLimit:
         slab = None
         slab_too_large()
@@ -40,9 +40,8 @@ def set_slab_range(node=None):
 
 
 def copy_slab_from_node(node=None):
-    json_data = get_js(node)
-    slab = encode_slab(json_data)
-    htg.utils.copy_to_clipboard(slab.strip("b'`"))
+    slab = prep_slab(node)
+    htg.utils.copy_to_clipboard(encode_slab(slab))
 
 
 def copy_slab(node=None):
@@ -57,8 +56,9 @@ def force_update(node=None):
     grid_node.cook(force=True, frame_range=(current_frame, current_frame+1))
 
 
-def get_js(geonode=None):
+def prep_slab(geonode=None):
     geo = geonode.geometry()
+
     uuid_data = {}
     for point in geo.points():
         uuid = point.attribValue('ts_uuid')
@@ -68,19 +68,20 @@ def get_js(geonode=None):
         degree = point.attribValue('ts_degree')
         if uuid not in uuid_data:
             uuid_data[uuid] = []
-        uuid_data[uuid].append({'x': x, 'y': y, 'z': z, 'degree': degree})
+        uuid_data[uuid].append({'pos_x': x, 'pos_y': y, 'pos_z': z, 'degrees': degree})
 
-    data = {'unique_asset_count': len(uuid_data.keys()), 'asset_data': []}
-    for auuid in uuid_data.keys():
-        asset_data = {
-            'uuid': auuid,
-            'instance_count': len(uuid_data[auuid]),
-            'instances': uuid_data[auuid]
+    slab = TSSlab()
+    slab.data["layout_count"] = len(uuid_data.keys())
+    for asset_uuid in uuid_data.keys():
+        asset_layout = {
+            'uuid': asset_uuid,
+            'reserved': 0,
+            'instance_count': len(uuid_data[asset_uuid]),
+            'instances': uuid_data[asset_uuid]
         }
-        data['asset_data'].append(asset_data)
+        slab.data["layouts"].append(asset_layout)
 
-    json_dump = json.dumps(data)
-    return data
+    return slab
 
 
 def get_slab_with_pos(node=None):
@@ -89,11 +90,10 @@ def get_slab_with_pos(node=None):
     point = geo.point(0)
     try:
         pos = tuple(point.position())
-        json_data = get_js(node)
-        slab = encode_slab(json_data)
+        slab = prep_slab(node)
         out = {
             "position": {"x": pos[0], "y": pos[1], "z": -pos[2]},
-            "code": slab.strip("b'`")
+            "code": encode_slab(slab)
         }
     except AttributeError:
         out = None
