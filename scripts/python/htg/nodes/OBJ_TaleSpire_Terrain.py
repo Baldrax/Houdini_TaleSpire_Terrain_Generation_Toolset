@@ -5,8 +5,6 @@ import htg.utils
 import htg.configs as ts_configs
 import htg.nodes.common as ts_common
 import htg.nodes.SOP_TaleSpire_Export as ts_export
-from ts_encoding.slab import TSSlab
-
 
 def read_configs(node=None):
     cfg = ts_configs.Configs()
@@ -296,6 +294,9 @@ def get_slab_with_pos(node=None):
 
 
 def prep_slab(node=None):
+    # Lazy import to get around load errors if this module isn't installed
+    from ts_encoding.slab import TSSlab
+
     geonode = get_out_node(node)
     geo = geonode.geometry()
 

@@ -1,7 +1,6 @@
 import hou
 import json
-
-from ts_encoding.slab import TSSlab
+import htg.nodes.common as ts_common
 
 
 def lock_collider(parm=None, cook=False):
@@ -117,13 +116,16 @@ def get_uuid_asset_db(node=None):
 
 
 def decode_slab(node=None):
+    # Lazy import to get around load errors if this module isn't installed
+    from ts_encoding.slab import TSSlab, BadSlabCode
+
     data = node.parm('ts_slab_str').eval()
     node.parm('ts_slab_str').set(data.strip('`'))
     try:
         slab = TSSlab()
         slab.decode_slab(data)
         slab_data = slab.data
-    except ts_encoding.BadSlabCode:
+    except BadSlabCode:
         hou.ui.displayMessage('Not a valid TaleSpire Slab')
         slab_data = None
 

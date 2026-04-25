@@ -5,9 +5,6 @@ import sys
 import htg.utils
 import hou
 
-from ts_encoding.slab import TSSlab
-from ts_encoding import SlabExceedsSizeLimit
-
 
 def slab_too_large():
     title = "Slab too large"
@@ -19,6 +16,8 @@ def slab_too_large():
 
 
 def encode_slab(slab_obj: TSSlab):
+    from ts_encoding import SlabExceedsSizeLimit
+
     try:
         slab = slab_obj.encode_slab()
     except SlabExceedsSizeLimit:
@@ -57,6 +56,8 @@ def force_update(node=None):
 
 
 def prep_slab(geonode=None):
+    # Lazy import to get around load errors if this module isn't installed
+    from ts_encoding.slab import TSSlab
     geo = geonode.geometry()
 
     uuid_data = {}
