@@ -277,7 +277,7 @@ class InstallationWorker(QThread):
         is_update = False
         self.log_update.emit("Checking External Package Versions ", STEP)
         self.log_update.emit("..", DOTS)
-        package_list = check_external_packages(force=True)
+        package_list = check_external_packages()
         self.log_update.emit(" Done\n\n", DONE)
 
         if len(package_list) > 0:

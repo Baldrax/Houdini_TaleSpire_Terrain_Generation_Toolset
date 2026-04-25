@@ -3,8 +3,6 @@ import os
 import tempfile
 from cryptography.fernet import Fernet
 
-from htg.utils import check_external_packages
-
 
 # Menu Functions
 def ts_assets_menu():
@@ -35,7 +33,6 @@ def inside_terrain_node(node):
 # Shared Data Node
 def get_ts_database_node():
     shared_data_node = SharedData()
-    check_external_packages(ui_warning=True) # Checks to make sure necessary external packages are installed.
     return shared_data_node.get_database_node()
 
 
@@ -211,4 +208,3 @@ class NetworkIO:
         data_node = self.shared_data.get_data_node()
         key = data_node.userData('ekey')
         return bytes(key, 'utf-8')
-

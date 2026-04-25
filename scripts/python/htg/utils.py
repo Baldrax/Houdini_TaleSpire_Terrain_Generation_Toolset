@@ -41,9 +41,10 @@ def check_external_packages(ui_warning=False, force=False):
         force: Will force the check to happen even if it has already been done this session.
     """
     # Store if the packages have been checked in hou.session, this ensures the check only happens once.
-    if hasattr(hou.session, "htg_packages_checked") and hou.session.htg_packages_checked == True and not force:
-        return []
-    hou.session.htg_packages_checked = True
+    if not force:
+        cached = getattr(hou.session, "htg_packages_check_result", None)
+        if cached is not None:
+            return cached
 
     package_list = []
     external_packages_file = Path(hou.expandString("$HTG_BASEDIR")) / "external_packages.json"
@@ -74,6 +75,8 @@ def check_external_packages(ui_warning=False, force=False):
                 "package": package
             }
         )
+
+    hou.session.htg_packages_check_result = package_list
 
     if ui_warning and add_package:
         msg = ("Warning! Necessary external packages are missing or are the wrong version.\n"

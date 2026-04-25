@@ -1,14 +1,7 @@
 import hou
 import json
 
-import ts_encoding
 from ts_encoding.slab import TSSlab
-
-import htg.nodes.common as ts_common
-
-from importlib import reload
-reload(ts_encoding)
-reload(ts_encoding.slab)
 
 
 def lock_collider(parm=None, cook=False):
