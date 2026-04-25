@@ -15,7 +15,7 @@ def slab_too_large():
     sys.exit(1)
 
 
-def encode_slab(slab_obj: TSSlab):
+def encode_slab(slab_obj):
     from ts_encoding import SlabExceedsSizeLimit
 
     try:

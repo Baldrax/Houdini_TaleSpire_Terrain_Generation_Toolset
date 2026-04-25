@@ -117,7 +117,8 @@ def get_uuid_asset_db(node=None):
 
 def decode_slab(node=None):
     # Lazy import to get around load errors if this module isn't installed
-    from ts_encoding.slab import TSSlab, BadSlabCode
+    from ts_encoding.slab import TSSlab
+    from ts_encoding import BadSlabCode
 
     data = node.parm('ts_slab_str').eval()
     node.parm('ts_slab_str').set(data.strip('`'))
