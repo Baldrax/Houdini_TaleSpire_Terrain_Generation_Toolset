@@ -42,7 +42,7 @@ except ImportError:
 REPO_NAME = "Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset"
 
 # Options for Development and Debugging
-DEBUG = True
+DEBUG = False
 START_PAGE = None
 INSTALL_EXISTS = True
 REPORT_ONLY = True
