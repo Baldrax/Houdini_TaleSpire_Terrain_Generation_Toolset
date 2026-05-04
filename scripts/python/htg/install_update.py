@@ -305,10 +305,15 @@ class InstallationWorker(QThread):
                     "--no-input", "--upgrade", "--target", str(lib_path),
                     f"{package_dict['package_name']} @ {package_dict['repo']}@v{package_dict['version']}",
                 ]
-                proc = subprocess.Popen(
-                    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                    text=True, bufsize=1, creationflags=subprocess.CREATE_NO_WINDOW
-                )
+
+                kwargs = {
+                    "stdout": subprocess.PIPE, "stderr": subprocess.PIPE, "text": True, "bufsize": 1
+                }
+
+                if platform.system() == "Windows":
+                    kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+
+                proc = subprocess.Popen(cmd,  **kwargs)
 
                 for line in proc.stdout:
                     self.log_update.emit(line, DATA)
