@@ -50,5 +50,7 @@ Join us on Discord to discuss the toolset, share work and inspiration and to get
 - [Join Discord](https://discord.gg/vccbMYC4qb)
 
 ### Attributions
-The TaleSpire Slab Encoding/Decoding code was originally authored by LuPro 
-at [LuPro/SlabelFish](https://github.com/LuPro/SlabelFish)
+Special thanks to LuPro and [LuPro/SlabelFish](https://github.com/LuPro/SlabelFish)
+
+This project no longer uses SlabelFish for encoding, but it did for many years and the project would not have 
+gotten off the ground without it. 

@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 import requests
 import shutil
 import sys
+import subprocess
 import tempfile
 import warnings
 import zipfile
+
+from htg.utils import check_external_packages
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 # TODO: distutils is deprecated and will likely not be available in python 3.13, will
@@ -40,7 +44,7 @@ REPO_NAME = "Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset"
 # Options for Development and Debugging
 DEBUG = False
 START_PAGE = None
-INSTALL_EXISTS = False
+INSTALL_EXISTS = True
 REPORT_ONLY = True
 
 # Log Colors
@@ -143,12 +147,14 @@ class InstallationWorker(QThread):
             destination_dir: Path | None = None
     ):
         super().__init__()
-        # type: "download", "copy", "in-place"
+        # type: "download", "copy", "in-place", "install_packages"
         self.install_type = install_type
         self.new_install = new_install
         self.dl_url = dl_url
         self.source_dir = source_dir
         self.destination_dir = destination_dir
+
+        self.do_install_external_packages = True
 
         self.do_download = self.install_type == "download"
         self.do_copy = self.do_download or self.install_type == "copy"
@@ -239,6 +245,9 @@ class InstallationWorker(QThread):
                 self.log_update.emit("..", DOTS)
             self.log_update.emit(" Done\n\n", DONE)
 
+        if self.do_install_external_packages or self.install_type == "install_packages":
+            self.install_external_packages()
+
         self.log_update.emit("Relaunch Houdini for changes to take effect.\n", INFO)
 
         self.completed.emit()
@@ -263,11 +272,56 @@ class InstallationWorker(QThread):
                     # percent_done = (downloaded / total_size) * 100
                     self.log_update.emit(".", DOTS)
 
+    def install_external_packages(self):
+        do_install = False
+        is_update = False
+        self.log_update.emit("Checking External Package Versions ", STEP)
+        self.log_update.emit("..", DOTS)
+
+        # Even though the package_list is likely cached read it again (force) in case the new version has changes.
+        package_list = check_external_packages(force=True)
+        self.log_update.emit(" Done\n\n", DONE)
+
+        if len(package_list) > 0:
+            lib_path = Path(hou.expandString("$HTG_BASEDIR")) / "python_libs"
+            houdini_bin = Path(os.environ.get("HB", ""))
+            hython_path = houdini_bin / "hython.exe" if platform.system() == "Windows" else "hython"
+
+            for package_dict in package_list:
+                self.log_update.emit(f"Removing old {package_dict['package_name']} ", STEP)
+                self.log_update.emit("..", DOTS)
+                rm_paths = list(lib_path.glob(f"{package_dict['package_name'].replace('-', '_')}-*.dist-info"))
+                rm_paths.append(lib_path / package_dict["package"])
+                for rm_path in rm_paths:
+                    if rm_path.is_dir():
+                        shutil.rmtree(rm_path)
+                        self.log_update.emit("..", DOTS)
+                self.log_update.emit(" Done\n\n", DONE)
+
+                self.log_update.emit(f"Installing {package_dict['package_name']} - DO NOT CLOSE DIALOG\n", STEP)
+                cmd = [
+                    str(hython_path),
+                    "-m", "pip", "install", "--disable-pip-version-check", "--ignore-requires-python",
+                    "--no-input", "--upgrade", "--target", str(lib_path),
+                    f"{package_dict['package_name']} @ {package_dict['repo']}@v{package_dict['version']}",
+                ]
+                proc = subprocess.Popen(
+                    cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                    text=True, bufsize=1, creationflags=subprocess.CREATE_NO_WINDOW
+                )
+
+                for line in proc.stdout:
+                    self.log_update.emit(line, DATA)
+
+                return_code = proc.wait()
+                self.log_update.emit(f"Done installing {package_dict['package_name']}\n\n", STEP)
+
+
 class InstallDialog(QDialog):
 
     LABEL_WIDTH = 50
 
-    def __init__(self, cmd_path: str | None = None):
+    def __init__(self, cmd_path: str | None = None, install_packages: bool = False):
         parent = hou.qt.mainWindow()
         super().__init__(parent, Qt.Window)
         self.setWindowTitle("HTG Toolset Install/Update")
@@ -299,6 +353,8 @@ class InstallDialog(QDialog):
                 self.start_page = "ManualUpdate"
         elif self.ran_from_cmd:
             self.start_page = "NewInstall"
+        elif install_packages:
+            self.start_page = "Installation"
         else:
             self.start_page = "Update"
 
@@ -353,6 +409,10 @@ class InstallDialog(QDialog):
         layout = QVBoxLayout()
         layout.addWidget(self.stack)
         self.setLayout(layout)
+
+        if install_packages:
+            self.start_installation(install_type="install_packages")
+
 
     def init_new_install_page(self):
         # Base page layout
@@ -706,7 +766,7 @@ class InstallDialog(QDialog):
         cursor.insertText(text)
 
 
-def show(cmd_path: str | None = None):
+def show(cmd_arg: str | None = None):
     # If the dialog already exists in hou.session close it before opening another one.
     if hasattr(hou.session, "install_dialog") and hou.session.install_dialog is not None:
         try:
@@ -714,7 +774,10 @@ def show(cmd_path: str | None = None):
         except:
             pass
 
-    dialog = InstallDialog(cmd_path=cmd_path)
+    if cmd_arg == "update_packages":
+        dialog = InstallDialog(install_packages=True)
+    else:
+        dialog = InstallDialog(cmd_path=cmd_arg)
     hou.session.install_dialog = dialog
     dialog.show()
 
@@ -730,7 +793,7 @@ if open_dialog:
 # This runs if executed from the Run command in Houdini or from the command line.
 if __name__ == "__main__":
     try:
-        cmd_base_dir = sys.argv[1]
-        show(cmd_path=cmd_base_dir)
+        cmd_arg = sys.argv[1]
+        show(cmd_arg=cmd_arg)
     except IndexError:
         show()

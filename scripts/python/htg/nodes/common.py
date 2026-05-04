@@ -208,4 +208,3 @@ class NetworkIO:
         data_node = self.shared_data.get_data_node()
         key = data_node.userData('ekey')
         return bytes(key, 'utf-8')
-
