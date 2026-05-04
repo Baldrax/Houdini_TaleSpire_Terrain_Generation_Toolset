@@ -11,7 +11,10 @@
         "HOUDINI_UI_QUEUE_SIZE": 300000
       },
       {
-        "HOUDINI_OTLSCAN_PATH": {"houdini_version >= '21.0'": "$HOUDINI_PACKAGE_PATH/../recipes"}
+        "HOUDINI_OTLSCAN_PATH": {"houdini_version >= '21.0'": "$HTG_BASEDIR/recipes"}
+      },
+      {
+        "PYTHONPATH": "$HTG_BASEDIR/python_libs"
       }
     ]
 }
