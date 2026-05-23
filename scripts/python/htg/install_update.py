@@ -11,7 +11,12 @@ import tempfile
 import warnings
 import zipfile
 
-from htg.utils import check_external_packages
+# For first time installs htg will not be in the path checking for external packages will then
+# happen when the toolset is accessed or for updates.
+try:
+    from htg.utils import check_external_packages
+except ModuleNotFoundError:
+    check_external_packages = None
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 # TODO: distutils is deprecated and will likely not be available in python 3.13, will
@@ -273,6 +278,9 @@ class InstallationWorker(QThread):
                     self.log_update.emit(".", DOTS)
 
     def install_external_packages(self):
+        if check_external_packages is None:
+            return
+
         do_install = False
         is_update = False
         self.log_update.emit("Checking External Package Versions ", STEP)
