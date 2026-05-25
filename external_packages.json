@@ -1,7 +1,7 @@
 {
   "talespire-encoding": {
-    "version": "1.2.1",
-    "repo": "git+https://github.com/Baldrax/TaleSpire-Encoding-Python.git",
+    "version": "1.2.2",
+    "repo": "talespire-encoding",
     "package": "ts_encoding"
   }
 }
