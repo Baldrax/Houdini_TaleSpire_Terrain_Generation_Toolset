@@ -311,7 +311,7 @@ class InstallationWorker(QThread):
                     str(hython_path),
                     "-m", "pip", "install", "--disable-pip-version-check", "--ignore-requires-python",
                     "--no-input", "--upgrade", "--target", str(lib_path),
-                    f"{package_dict['package_name']} @ {package_dict['repo']}@v{package_dict['version']}",
+                    f"{package_dict['package_name']}=={package_dict['version']}",
                 ]
 
                 kwargs = {
