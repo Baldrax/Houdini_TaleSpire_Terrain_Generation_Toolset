@@ -18,10 +18,6 @@ try:
 except ModuleNotFoundError:
     check_external_packages = None
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-# TODO: distutils is deprecated and will likely not be available in python 3.13, will
-#       need to find an alternative version comparison without installing python modules.
-from distutils.version import LooseVersion
 from pathlib import Path
 
 import hou
@@ -60,6 +56,29 @@ DOTS = "default"
 DONE = "green"
 INFO = "cyan"
 WARN = "red"
+
+def version_tuple(version: str, parts: int = 3) ->  tuple[int, ...]:
+    """
+    Given a version string get just the numerical version parts and return it as a tuple of a given length.
+
+    Args:
+        version: The Version String
+        parts: The number of components (default=3)
+
+    Returns:
+        A tuple containing the version components.
+
+    """
+    if version.startswith("v"):
+        version = version[1:]
+
+    core = version.split("-", 1)[0]
+    nums = [int(x) for x in core.split(".")]
+
+    nums.extend([0] * (parts - len(nums)))
+
+    return tuple(nums[:parts])
+
 
 def make_package_file(htg_dir: Path | None = None):
     user_pref_dir = os.environ.get("HOUDINI_USER_PREF_DIR")
@@ -123,7 +142,7 @@ def version_text(branch: str = "release", new_version: str | None = None) -> str
 
     ver_color = "red"
     if new_version:
-        is_newer = LooseVersion(new_version.lstrip("v")) > LooseVersion(current_version)
+        is_newer = version_tuple(new_version) > version_tuple(current_version)
         if is_newer:
             ver_color = "green"
 
