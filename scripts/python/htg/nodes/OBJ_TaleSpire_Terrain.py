@@ -367,3 +367,43 @@ def show_asset_count(node=None):
               f"Total Asset Count: {asset_data['num_assets']}\n\n"\
               f"Unique Assets: {asset_data['num_unique_assets']}"
     hou.ui.displayMessage('', details=message, details_expanded=True)
+
+
+def biome_info(node=None):
+    node = hou.pwd()
+    biome_net = hou.node('../../biomes')
+
+    cache_node = hou.node('../../terrain_tiler/read_terrain_tiles')
+    if cache_node.geometry() is not None:
+        geo = node.geometry()
+        geo.addAttrib( hou.attribType.Point, 'default_biome', 0 )
+        geo.addAttrib( hou.attribType.Point, 'biome_disabled', 0 )
+        geo.addAttrib( hou.attribType.Point, 'layer_name', '' )
+        geo.addAttrib( hou.attribType.Point, 'biome_priority', 0 )
+        geo.addAttrib( hou.attribType.Point, 'biome_node_path', '' )
+
+
+        found_default = False
+        b_nodes = [x for x in biome_net.children() if x.type().name() == 'TaleSpire_Biome']
+        if len(b_nodes) > 0:
+            for b_node in b_nodes:
+                is_disabled = b_node.parm('disable_biome').eval() == 1
+                is_subbiome = b_node.parm('enable_sub_biome').eval() == 1
+                is_default_biome = b_node.parm('default_biome').eval() == 1
+                biome_layer_name = b_node.parm('biome_layer_name').eval()
+                biome_priority = b_node.parm('biome_priority').eval()
+                if not is_subbiome and not is_disabled:
+                    point = geo.createPoint()
+                    if not found_default and is_default_biome:
+                        found_default = True
+                        point.setAttribValue('default_biome', 1)
+                    point.setAttribValue('layer_name', biome_layer_name)
+                    point.setAttribValue('biome_priority', biome_priority)
+                    point.setAttribValue('biome_node_path', b_node.path())
+
+            if not found_default:
+                hou.ui.displayMessage('No default biome was found '
+                                      'select one biome in "Edit Biomes" to be the default biome')
+        else:
+            hou.ui.displayMessage('No biomes are defined, add biomes to the '
+                                  'biome network with "Edit Biomes"')
