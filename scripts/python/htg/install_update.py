@@ -18,31 +18,19 @@ try:
 except ModuleNotFoundError:
     check_external_packages = None
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-# TODO: distutils is deprecated and will likely not be available in python 3.13, will
-#       need to find an alternative version comparison without installing python modules.
-from distutils.version import LooseVersion
 from pathlib import Path
 
 import hou
 
 # As of Houdini 21.0 Sidefx switched to PySide6, we'll attempt to support PySide2 as well.
 try:
-    from PySide6.QtWidgets import (
-        QPushButton, QDialog, QStackedWidget, QVBoxLayout, QLabel, QLineEdit, QHBoxLayout, QCheckBox,
-        QComboBox, QSizePolicy, QTextEdit
-    )
-    from PySide6.QtCore import Qt, QThread, Signal
-    from PySide6.QtGui import QTextCursor, QTextCharFormat, QColor
+    from PySide6 import QtWidgets, QtCore, QtGui
     PYSIDE_VERSION = 6
 except ImportError:
-    from PySide2.QtWidgets import (
-        QPushButton, QDialog, QStackedWidget, QVBoxLayout, QLabel, QLineEdit, QHBoxLayout, QCheckBox,
-        QComboBox, QSizePolicy, QTextEdit
-    )
-    from PySide2.QtCore import Qt, QThread, Signal
-    from PySide2.QtGui import QTextCursor, QTextCharFormat, QColor
+    from PySide2 import QtWidgets, QtCore, QtGui
     PYSIDE_VERSION = 2
+    
+Qt = QtCore.Qt
 
 REPO_NAME = "Baldrax/Houdini_TaleSpire_Terrain_Generation_Toolset"
 
@@ -60,6 +48,29 @@ DOTS = "default"
 DONE = "green"
 INFO = "cyan"
 WARN = "red"
+
+def version_tuple(version: str, parts: int = 3) ->  tuple[int, ...]:
+    """
+    Given a version string get just the numerical version parts and return it as a tuple of a given length.
+
+    Args:
+        version: The Version String
+        parts: The number of components (default=3)
+
+    Returns:
+        A tuple containing the version components.
+
+    """
+    if version.startswith("v"):
+        version = version[1:]
+
+    core = version.split("-", 1)[0]
+    nums = [int(x) for x in core.split(".")]
+
+    nums.extend([0] * (parts - len(nums)))
+
+    return tuple(nums[:parts])
+
 
 def make_package_file(htg_dir: Path | None = None):
     user_pref_dir = os.environ.get("HOUDINI_USER_PREF_DIR")
@@ -123,7 +134,7 @@ def version_text(branch: str = "release", new_version: str | None = None) -> str
 
     ver_color = "red"
     if new_version:
-        is_newer = LooseVersion(new_version.lstrip("v")) > LooseVersion(current_version)
+        is_newer = version_tuple(new_version) > version_tuple(current_version)
         if is_newer:
             ver_color = "green"
 
@@ -139,9 +150,9 @@ def version_text(branch: str = "release", new_version: str | None = None) -> str
     return text
 
 
-class InstallationWorker(QThread):
-    log_update = Signal(str, str)  # message, color
-    completed = Signal()
+class InstallationWorker(QtCore.QThread):
+    log_update = QtCore.Signal(str, str)  # message, color
+    completed = QtCore.Signal()
 
     def __init__(
             self,
@@ -330,7 +341,7 @@ class InstallationWorker(QThread):
                 self.log_update.emit(f"Done installing {package_dict['package_name']}\n\n", STEP)
 
 
-class InstallDialog(QDialog):
+class InstallDialog(QtWidgets.QDialog):
 
     LABEL_WIDTH = 50
 
@@ -394,7 +405,7 @@ class InstallDialog(QDialog):
         # The pages list is used to keep track of the stack index,
         # so we can look up the page by name instead of index.
         self.pages = []
-        self.stack = QStackedWidget(self)
+        self.stack = QtWidgets.QStackedWidget(self)
         self.pages.append("ManualUpdate")
         self.init_manual_update_page()
 
@@ -419,7 +430,7 @@ class InstallDialog(QDialog):
         else:
             self.stack.setCurrentIndex(self.pages.index(self.start_page))
 
-        layout = QVBoxLayout()
+        layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.stack)
         self.setLayout(layout)
 
@@ -429,14 +440,14 @@ class InstallDialog(QDialog):
 
     def init_new_install_page(self):
         # Base page layout
-        page_setup = QVBoxLayout()
+        page_setup = QtWidgets.QVBoxLayout()
         page_setup.setAlignment(Qt.AlignTop)
 
-        label = QLabel("<h3>New Install</h3><hr>")
+        label = QtWidgets.QLabel("<h3>New Install</h3><hr>")
         page_setup.addWidget(label)
 
         # Install in Place Toggle
-        self.install_in_place = QCheckBox("Install in Place")
+        self.install_in_place = QtWidgets.QCheckBox("Install in Place")
         self.install_in_place.setToolTip("If enabled the toolset will be used from its current location. "
                                          "No files will be moved.\n"
                                          "This can Also be used to set up the toolset to use with a new major version "
@@ -446,15 +457,15 @@ class InstallDialog(QDialog):
         page_setup.addWidget(self.install_in_place)
 
         # Install Directory Label
-        self.install_directory_label = QLabel("Select the base directory where the toolset will be installed.\n"
+        self.install_directory_label = QtWidgets.QLabel("Select the base directory where the toolset will be installed.\n"
                                          "The toolset directory will be created inside this directory:")
         page_setup.addWidget(self.install_directory_label)
 
         # Install Location Row
-        h_layout = QHBoxLayout()
-        self.install_location = QLineEdit()
+        h_layout = QtWidgets.QHBoxLayout()
+        self.install_location = QtWidgets.QLineEdit()
         self.install_location.setText("$HOME/TaleSpire/")
-        self.browse_button = QPushButton(text="Browse")
+        self.browse_button = QtWidgets.QPushButton(text="Browse")
         self.browse_button.clicked.connect(self.select_directory)
 
         h_layout.addWidget(self.install_location)
@@ -462,19 +473,19 @@ class InstallDialog(QDialog):
         page_setup.addLayout(h_layout)
 
         # Toolset Directory
-        self.toolset_directory_name_label = QLabel("Toolset Directory Name:")
-        self.toolset_directory_name = QLineEdit("Houdini_TaleSpire_Terrain_Generation_Toolset")
+        self.toolset_directory_name_label = QtWidgets.QLabel("Toolset Directory Name:")
+        self.toolset_directory_name = QtWidgets.QLineEdit("Houdini_TaleSpire_Terrain_Generation_Toolset")
         self.toolset_directory_name.textChanged.connect(self.toolset_dir_name_changed)
         page_setup.addWidget(self.toolset_directory_name_label)
         page_setup.addWidget(self.toolset_directory_name)
 
         # Bottom Button Row
-        btn_layout = QHBoxLayout()
+        btn_layout = QtWidgets.QHBoxLayout()
         btn_layout.setAlignment(Qt.AlignRight)
 
-        ok_button = QPushButton("Okay")
+        ok_button = QtWidgets.QPushButton("Okay")
         ok_button.clicked.connect(self.start_installation_from_new_install)
-        cancel_button = QPushButton("Cancel")
+        cancel_button = QtWidgets.QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
 
         btn_layout.addWidget(cancel_button)
@@ -484,7 +495,7 @@ class InstallDialog(QDialog):
         page_setup.addLayout(btn_layout)
 
         # Page Addition
-        widget = QDialog()
+        widget = QtWidgets.QDialog()
         widget.setLayout(page_setup)
         self.stack.addWidget(widget)
 
@@ -492,9 +503,9 @@ class InstallDialog(QDialog):
         self.toggle_install_location()
 
     def init_already_installed_page(self):
-        page_setup = QVBoxLayout()
+        page_setup = QtWidgets.QVBoxLayout()
         page_setup.setAlignment(Qt.AlignTop)
-        label = QLabel("<h3>Toolset Already Installed</h3>"
+        label = QtWidgets.QLabel("<h3>Toolset Already Installed</h3>"
                        "<hr>"
                        "<p>It appears that this version of the toolset is already installed and ready to use. "
                        "If you've downloaded and unzipped a new version of the toolset, <b>Cancel</b> this dialog and "
@@ -502,11 +513,11 @@ class InstallDialog(QDialog):
         label.setWordWrap(True)
         page_setup.addWidget(label)
 
-        button_layout = QHBoxLayout()
+        button_layout = QtWidgets.QHBoxLayout()
         button_layout.setAlignment(Qt.AlignRight)
-        cancel_button = QPushButton("Cancel")
+        cancel_button = QtWidgets.QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
-        update_button = QPushButton("Check for Updates")
+        update_button = QtWidgets.QPushButton("Check for Updates")
         update_button.clicked.connect(self.activate_update_page)
         button_layout.addWidget(cancel_button)
         button_layout.addWidget(update_button)
@@ -514,14 +525,14 @@ class InstallDialog(QDialog):
         page_setup.addStretch()
         page_setup.addLayout(button_layout)
 
-        widget = QDialog()
+        widget = QtWidgets.QDialog()
         widget.setLayout(page_setup)
         self.stack.addWidget(widget)
 
     def init_manual_update_page(self):
-        page_setup = QVBoxLayout()
+        page_setup = QtWidgets.QVBoxLayout()
         page_setup.setAlignment(Qt.AlignTop)
-        label = QLabel("<h3>Manual Update</h3>"
+        label = QtWidgets.QLabel("<h3>Manual Update</h3>"
                        "<hr>"
                        "<p>The toolset is already installed in another location. You can &quot;<b>Overwrite Existing "
                        "Version</b>&quot; with this version or &quot;<b>Install New</b>&quot;, installing this "
@@ -529,13 +540,13 @@ class InstallDialog(QDialog):
         label.setWordWrap(True)
         page_setup.addWidget(label)
 
-        button_layout = QHBoxLayout()
+        button_layout = QtWidgets.QHBoxLayout()
         button_layout.setAlignment(Qt.AlignRight)
-        cancel_button = QPushButton("Cancel")
+        cancel_button = QtWidgets.QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
-        overwrite_button = QPushButton("Overwrite Existing Version")
+        overwrite_button = QtWidgets.QPushButton("Overwrite Existing Version")
         overwrite_button.clicked.connect(self.start_installation_from_manual_update)
-        install_button = QPushButton("Install New")
+        install_button = QtWidgets.QPushButton("Install New")
         install_button.clicked.connect(lambda: self.stack.setCurrentIndex(self.pages.index("NewInstall")))
 
         button_layout.addWidget(cancel_button)
@@ -545,31 +556,31 @@ class InstallDialog(QDialog):
         page_setup.addStretch()
         page_setup.addLayout(button_layout)
 
-        widget = QDialog()
+        widget = QtWidgets.QDialog()
         widget.setLayout(page_setup)
         self.stack.addWidget(widget)
 
     def init_update_page(self):
-        page_setup = QVBoxLayout()
+        page_setup = QtWidgets.QVBoxLayout()
         page_setup.setAlignment(Qt.AlignTop)
 
-        label = QLabel("<h3>Toolset Update</h3><hr>")
+        label = QtWidgets.QLabel("<h3>Toolset Update</h3><hr>")
         page_setup.addWidget(label)
 
-        branch_layout = QHBoxLayout()
-        branch_label = QLabel("Branch:")
+        branch_layout = QtWidgets.QHBoxLayout()
+        branch_label = QtWidgets.QLabel("Branch:")
         branch_label.setFixedWidth(self.LABEL_WIDTH)
         label_height = branch_label.sizeHint().height()
         branch_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
-        self.branch_combo = QComboBox()
+        self.branch_combo = QtWidgets.QComboBox()
         self.branch_combo.addItem("Current Release")
         self.branch_combo.addItem("Older Release")
-        self.branch_combo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.branch_combo.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self.branch_combo.setFixedHeight(label_height+10)
 
-        self.release_combo = QComboBox()
-        self.release_combo.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.release_combo = QtWidgets.QComboBox()
+        self.release_combo.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self.release_combo.setFixedHeight(label_height + 10)
         self.release_combo.setVisible(False)
 
@@ -582,16 +593,16 @@ class InstallDialog(QDialog):
 
         page_setup.addLayout(branch_layout)
 
-        self.version_label = QLabel("")
+        self.version_label = QtWidgets.QLabel("")
         self.version_label.setAlignment(Qt.AlignLeft)
 
         page_setup.addWidget(self.version_label)
 
-        button_layout = QHBoxLayout()
+        button_layout = QtWidgets.QHBoxLayout()
         button_layout.setAlignment(Qt.AlignRight | Qt.AlignBottom)
-        dl_cancel_button = QPushButton("Cancel")
+        dl_cancel_button = QtWidgets.QPushButton("Cancel")
         dl_cancel_button.clicked.connect(self.reject)
-        dl_install_button = QPushButton("Download/Install")
+        dl_install_button = QtWidgets.QPushButton("Download/Install")
         dl_install_button.clicked.connect(self.start_installation_from_update)
         button_layout.addWidget(dl_cancel_button)
         button_layout.addWidget(dl_install_button)
@@ -599,31 +610,31 @@ class InstallDialog(QDialog):
         page_setup.addStretch()
         page_setup.addLayout(button_layout)
 
-        widget = QDialog()
+        widget = QtWidgets.QDialog()
         widget.setLayout(page_setup)
         self.stack.addWidget(widget)
 
     def init_installation_page(self):
-        page_setup = QVBoxLayout()
+        page_setup = QtWidgets.QVBoxLayout()
         page_setup.setAlignment(Qt.AlignTop)
-        label = QLabel("<h3>Installing...</h3>")
-        self.install_window = QTextEdit()
+        label = QtWidgets.QLabel("<h3>Installing...</h3>")
+        self.install_window = QtWidgets.QTextEdit()
         self.install_window.setReadOnly(True)
         self.install_color = self.install_window.palette().color(self.install_window.foregroundRole())
 
         page_setup.addWidget(label)
         page_setup.addWidget(self.install_window)
 
-        button_layout = QHBoxLayout()
+        button_layout = QtWidgets.QHBoxLayout()
         button_layout.setAlignment(Qt.AlignRight)
-        self.done_button = QPushButton("Done")
+        self.done_button = QtWidgets.QPushButton("Done")
         self.done_button.setEnabled(False)
         self.done_button.clicked.connect(self.accept)
         button_layout.addWidget(self.done_button)
 
         page_setup.addLayout(button_layout)
 
-        widget = QDialog()
+        widget = QtWidgets.QDialog()
         widget.setLayout(page_setup)
         self.stack.addWidget(widget)
 
@@ -749,13 +760,13 @@ class InstallDialog(QDialog):
 
     def update_install(self, message, color):
         cursor = self.install_window.textCursor()
-        cursor.movePosition(QTextCursor.End)
+        cursor.movePosition(QtGui.QTextCursor.End)
 
-        text_format = QTextCharFormat()
+        text_format = QtGui.QTextCharFormat()
         if color == "default":
             text_format.setForeground(self.install_color)
         else:
-            text_format.setForeground(QColor(color))
+            text_format.setForeground(QtGui.QColor(color))
         cursor.setCharFormat(text_format)
         cursor.insertText(message)
 
@@ -768,12 +779,12 @@ class InstallDialog(QDialog):
     # Unused
     def insert_colored_text(self, widget, color, text):
         cursor = widget.textCursor()
-        char_format = QTextCharFormat()
+        char_format = QtGui.QTextCharFormat()
 
         if color == "default":
             char_format.setForeground(self.install_color)
         else:
-            char_format.setForeground(QColor(color))
+            char_format.setForeground(QtGui.QColor(color))
 
         cursor.setCharFormat(char_format)
         cursor.insertText(text)
