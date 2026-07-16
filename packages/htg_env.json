@@ -15,6 +15,9 @@
       },
       {
         "PYTHONPATH": "$HTG_BASEDIR/python_libs"
+      },
+      {
+        "CRYPTOGRAPHY_OPENSSL_NO_LEGACY": 1
       }
     ]
 }
