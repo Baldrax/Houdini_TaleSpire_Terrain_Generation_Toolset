@@ -47,7 +47,7 @@ def check_external_packages(ui_warning=False, force=False):
             return cached
 
     package_list = []
-    external_packages_file = Path(hou.expandString("$HTG_BASEDIR")) / "external_packages.json"
+    external_packages_file = Path(hou.text.expandString("$HTG_BASEDIR")) / "external_packages.json"
     with external_packages_file.open("r", encoding="utf-8") as f:
         package_data = json.load(f)
 
