@@ -1,5 +1,9 @@
+import sys
+
 import hou
+
 from pathlib import Path
+
 from htg.version import version
 import htg.configs as ts_configs
 import htg.nodes.common as ts_common
@@ -12,6 +16,8 @@ try:
 except ImportError:
     ts_encoding_installed = False
 
+
+TAB_LINE: str = "\n\t"
 
 def scrub_path(path) -> str:
     """Removes user info from paths."""
@@ -32,7 +38,7 @@ def debug_report():
 
     if ts_basepath_isdir and ts_encoding_installed:
         asset_index_paths = get_asset_index_paths(ts_basedir=ts_basepath)
-        asset_path_str = "\n\t"+"\n\t".join([str(scrub_path(x)) for x in asset_index_paths])
+        asset_path_str = TAB_LINE + TAB_LINE.join([str(scrub_path(x)) for x in asset_index_paths])
     else:
         asset_index_paths = []
         asset_path_str = ""
@@ -43,6 +49,7 @@ VERSIONS
 =========
 Toolset Version: {version}
 Houdini Version: {".".join([str(x) for x in hou.applicationVersion()])}
+Python Version: {sys.version}
 Platform Info: {hou.applicationPlatformInfo()}
 
 =========
@@ -53,7 +60,6 @@ TaleSpire Location Valid: {ts_basepath_isdir}
 ts_encoding Installed: {ts_encoding_installed}
 TaleSpire Asset Paths: {asset_path_str}
 
-
 =========
 VARIABLES
 =========
@@ -61,6 +67,7 @@ HTG_BASEDIR: {scrub_path(hou.text.expandString("$HTG_BASEDIR"))}
 HTTGT_DEV: {hou.text.expandString("$HTTGT_DEV")}
 HOUDINI_OTLSCAN_PATH: {scrub_path(hou.text.expandString("$HOUDINI_OTLSCAN_PATH"))}
 PYTHONPATH: {scrub_path(hou.text.expandString("$PYTHONPATH"))}
+HOUDINI_PATH: {TAB_LINE}{TAB_LINE.join([scrub_path(x) for x in hou.houdiniPath()])}
 
 =========
 STATES
