@@ -569,7 +569,7 @@ class InstallDialog(QtWidgets.QDialog):
 
         branch_layout = QtWidgets.QHBoxLayout()
         branch_label = QtWidgets.QLabel("Branch:")
-        branch_label.setFixedWidth(self.LABEL_WIDTH)
+        # branch_label.setFixedWidth(self.LABEL_WIDTH)
         label_height = branch_label.sizeHint().height()
         branch_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
