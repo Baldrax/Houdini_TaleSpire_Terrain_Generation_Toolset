@@ -13,6 +13,13 @@ except ImportError:
     ts_encoding_installed = False
 
 
+def scrub_path(path) -> str:
+    """Removes user info from paths."""
+
+    username = hou.text.expandString("$USER")
+    return str(path).replace(username, "<username>")
+
+
 def debug_report():
     """
     Displays a simple report that a user can submit with a bug report to give some context on their installation and
@@ -25,8 +32,10 @@ def debug_report():
 
     if ts_basepath_isdir and ts_encoding_installed:
         asset_index_paths = get_asset_index_paths(ts_basedir=ts_basepath)
+        asset_path_str = "\n\t"+"\n\t".join([str(scrub_path(x)) for x in asset_index_paths])
     else:
         asset_index_paths = []
+        asset_path_str = ""
 
     report = f"""Houdini TaleSpire Terrain Generation Toolset Report
 =========
@@ -39,19 +48,19 @@ Platform Info: {hou.applicationPlatformInfo()}
 =========
 TALESPIRE
 =========
-TaleSpire Location: {ts_basepath}
+TaleSpire Location: {scrub_path(ts_basepath)}
 TaleSpire Location Valid: {ts_basepath_isdir}
 ts_encoding Installed: {ts_encoding_installed}
-TaleSpire Asset Paths: {";".join([str(x) for x in asset_index_paths])}
+TaleSpire Asset Paths: {asset_path_str}
 
 
 =========
 VARIABLES
 =========
-HTG_BASEDIR: {hou.text.expandString("$HTG_BASEDIR")}
+HTG_BASEDIR: {scrub_path(hou.text.expandString("$HTG_BASEDIR"))}
 HTTGT_DEV: {hou.text.expandString("$HTTGT_DEV")}
-HOUDINI_OTLSCAN_PATH: {hou.text.expandString("$HOUDINI_OTLSCAN_PATH")}
-PYTHONPATH: {hou.text.expandString("$PYTHONPATH")}
+HOUDINI_OTLSCAN_PATH: {scrub_path(hou.text.expandString("$HOUDINI_OTLSCAN_PATH"))}
+PYTHONPATH: {scrub_path(hou.text.expandString("$PYTHONPATH"))}
 
 =========
 STATES
