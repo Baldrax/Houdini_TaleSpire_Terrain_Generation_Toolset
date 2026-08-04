@@ -302,7 +302,7 @@ class InstallationWorker(QtCore.QThread):
         self.log_update.emit(" Done\n\n", DONE)
 
         if len(package_list) > 0:
-            lib_path = Path(hou.expandString("$HTG_BASEDIR")) / "python_libs"
+            lib_path = Path(hou.text.expandString("$HTG_BASEDIR")) / "python_libs"
             houdini_bin = Path(os.environ.get("HB", ""))
             hython_path = houdini_bin / "hython.exe" if platform.system() == "Windows" else "hython"
 
@@ -718,8 +718,8 @@ class InstallDialog(QtWidgets.QDialog):
             destination_dir = self.cmd_path
         else:
             install_type = "copy"
-            base_dir = Path(hou.expandString(self.install_location.text()))
-            dir_name = hou.expandString(self.toolset_directory_name.text())
+            base_dir = Path(hou.text.expandString(self.install_location.text()))
+            dir_name = hou.text.expandString(self.toolset_directory_name.text())
             destination_dir = base_dir / dir_name
 
         self.start_installation(
