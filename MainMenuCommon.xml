@@ -64,6 +64,16 @@
           <separatorItem/>
 
           <scriptItem>
+              <label>Debug Info</label>
+              <scriptCode><![CDATA[
+from htg.debugging import debug_report
+debug_report()
+              ]]></scriptCode>
+          </scriptItem>
+
+          <separatorItem/>
+
+          <scriptItem>
               <label>Check for Updates</label>
               <scriptPath>$HTG_BASEDIR/scripts/python/htg/install_update.py</scriptPath>
           </scriptItem>
